@@ -1,0 +1,4 @@
+interface:
+  display_name: "法律悬疑互动小说设计"
+  short_description: "将法律悬疑互动小说需求转成可执行的Agent架构与交付流程"
+  default_prompt: "Use $legal-suspense-interactive-novel to convert my legal mystery concept into an executable architecture, workflow, and delivery package."

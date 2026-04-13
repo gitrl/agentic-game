@@ -1,0 +1,10 @@
+{
+  "name": "legal-suspense-interactive-game",
+  "private": true,
+  "scripts": {
+    "dev": "sh -c 'npm run dev:backend & npm run dev:frontend & wait'",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend"
+  }
+}

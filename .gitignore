@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.DS_Store
+.idea/
+.vscode/
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/
+backend/dist/
+
+# Environment files
+**/.env
+**/.env.local
+**/.env.development
+**/.env.production
+!**/.env.example
