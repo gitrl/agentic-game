@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import type { ActionResult, TokenUsage } from "../types/game.js";
 import { readLlmConfig, type LlmConfig } from "../config/llmConfig.js";
+import { NARRATIVE_SYSTEM_PROMPT } from "../prompts/narrativeSystemPrompt.js";
 
 type EnhanceInput = {
   turnResult: ActionResult;
@@ -53,16 +54,6 @@ export class LlmNarrativeService {
 
     const { turnResult, sessionId } = input;
 
-    const systemPrompt = [
-      "你是法律悬疑互动小说的叙事润色助手。",
-      "目标：在不改变状态结果与事件标签的前提下，把文本写得更有沉浸感和法庭攻防感。",
-      "要求：",
-      "1) narrative 保持 3-6 句中文。",
-      "2) summary 保持 1 句中文，适合作为回放摘要。",
-      "3) 不要新增未提供的硬事实。",
-      "4) 返回 JSON：{\"narrative\": string, \"summary\": string}"
-    ].join("\n");
-
     const userPayload = {
       session_id: sessionId,
       turn: turnResult.turn,
@@ -71,7 +62,8 @@ export class LlmNarrativeService {
       base_summary: turnResult.summary,
       stat_changes: turnResult.statChanges,
       events: turnResult.events,
-      verdict_outlook: turnResult.verdictOutlook
+      verdict_outlook: turnResult.verdictOutlook,
+      rebirth: turnResult.rebirth
     };
 
     const controller = new AbortController();
@@ -86,7 +78,7 @@ export class LlmNarrativeService {
           model: this.config.model,
           temperature: this.config.temperature,
           messages: [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: NARRATIVE_SYSTEM_PROMPT },
             { role: "user", content: JSON.stringify(userPayload, null, 2) }
           ],
           response_format: { type: "json_object" }

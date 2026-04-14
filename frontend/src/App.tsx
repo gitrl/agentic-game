@@ -28,8 +28,10 @@ import type {
   Flags,
   GameStateResponse,
   InitResponse,
+  InputFeedback,
   NpcRelation,
   Progress,
+  RebirthState,
   ReplayResponse,
   Stats
 } from "./types";
@@ -40,13 +42,13 @@ const DEFAULT_TALENT = "交叉质证";
 const DEFAULT_STARTER_ITEM = "案卷标注笔";
 const CASE_BRIEF = [
   "【案件名称】青禾江堤坠亡案",
-  "【时间节点】你重生回冤案宣判前 21 天，上一世的错误判决尚未发生。",
+  "【时间节点】我重生回冤案宣判前 21 天，上一世的错误判决尚未发生。",
   "【被告】林策，27 岁网约车司机；上一世被判故意杀人并执行死刑。",
   "【死者】梁蔚，市重点项目审计员，死前掌握多方利益链条关键资料。",
   "【检方观点】案发当晚林策与梁蔚发生争执，将其推落江堤后伪造报警时间。",
   "【已知疑点】监控黑屏 43 秒、120 接警时间与警方记录错位 7 分钟、法医鉴定链条存在缺口。",
-  "【重生限制】你知道真相，但不能直接说；一旦暴露“先验记忆”，证词会被认定为诱导。",
-  "【你的任务】只能通过证据链、程序异议与交叉质证，实质改变最终判决。"
+  "【重生限制】我知道真相，但不能直接说；一旦暴露“先验记忆”，证词会被认定为诱导。",
+  "【任务目标】我只能通过证据链、程序异议与交叉质证，实质改变最终判决。"
 ];
 
 type VerdictOutlook = "truth" | "wrongful" | "misled" | "interference" | "undetermined";
@@ -78,6 +80,13 @@ const defaultFlags: Flags = {
   interferenceDetected: false
 };
 
+const defaultRebirth: RebirthState = {
+  loop: 1,
+  memoryRetention: 0.6,
+  knownTruths: [],
+  fate: 72
+};
+
 function App() {
   const [sessionId, setSessionId] = useState("");
   const [initialized, setInitialized] = useState(false);
@@ -85,6 +94,7 @@ function App() {
   const [status, setStatus] = useState("请先阅读案情并输入姓名");
 
   const [name, setName] = useState("沈言");
+  const [actionInput, setActionInput] = useState("");
 
   const [storyFeed, setStoryFeed] = useState<string[]>([]);
   const [streamingText, setStreamingText] = useState("");
@@ -99,6 +109,7 @@ function App() {
   const [progress, setProgress] = useState<Progress>(defaultProgress);
   const [stats, setStats] = useState<Stats>(defaultStats);
   const [flags, setFlags] = useState<Flags>(defaultFlags);
+  const [rebirth, setRebirth] = useState<RebirthState>(defaultRebirth);
   const [evidencePool, setEvidencePool] = useState<EvidenceItem[]>([]);
   const [npcRelations, setNpcRelations] = useState<Record<string, NpcRelation>>({});
   const [verdictOutlook, setVerdictOutlook] = useState<VerdictOutlook>("undetermined");
@@ -106,6 +117,7 @@ function App() {
   const [lastStatChanges, setLastStatChanges] = useState<string[]>([]);
   const [lastEvents, setLastEvents] = useState<string[]>([]);
   const [lastTokenUsage, setLastTokenUsage] = useState<TokenUsage | null>(null);
+  const [inputFeedback, setInputFeedback] = useState<InputFeedback | null>(null);
 
   const [saveIdInput, setSaveIdInput] = useState("");
   const [latestSaveId, setLatestSaveId] = useState("");
@@ -205,10 +217,13 @@ function App() {
     setStoryFeed([]);
     setStreamingText("");
     streamingRef.current = "";
+    setActionInput("");
+    setInputFeedback(null);
     setTurn(0);
     setProgress(defaultProgress);
     setStats(defaultStats);
     setFlags(defaultFlags);
+    setRebirth(defaultRebirth);
     setEvidencePool([]);
     setNpcRelations({});
     setVerdictOutlook("undetermined");
@@ -248,6 +263,7 @@ function App() {
       setProgress(data.progress);
       setStats(data.stats);
       setFlags(data.flags);
+      setRebirth(data.rebirth);
       setEvidencePool(data.evidencePool);
       setNpcRelations(data.npcRelations);
       setVerdictOutlook(data.verdictOutlook);
@@ -259,7 +275,7 @@ function App() {
     }
   };
 
-  const handleChoice = async (choiceId: string) => {
+  const submitTurn = async (payload: { choiceId?: string; userInput?: string }) => {
     if (!initialized || busy) {
       return;
     }
@@ -270,6 +286,11 @@ function App() {
       return;
     }
 
+    if (!payload.choiceId && !payload.userInput?.trim()) {
+      setStatus("请输入你的行动指令，或选择下方策略卡片");
+      return;
+    }
+
     setBusy(true);
     setStatus("法庭记录中...");
     stopPlayback();
@@ -277,12 +298,13 @@ function App() {
     pendingDoneSummaryRef.current = null;
     setStreamingText("");
     streamingRef.current = "";
+    setInputFeedback(null);
 
     try {
       const res = await fetch(`${API_BASE}/sessions/${activeSessionId}/actions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ choiceId })
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
@@ -325,6 +347,20 @@ function App() {
     }
   };
 
+  const handleChoice = async (choiceId: string) => {
+    await submitTurn({ choiceId });
+  };
+
+  const handleUserInputSubmit = async () => {
+    if (!actionInput.trim()) {
+      setStatus("请输入你的行动指令后再发送");
+      return;
+    }
+    const rawInput = actionInput;
+    setActionInput("");
+    await submitTurn({ userInput: rawInput });
+  };
+
   const handleSseEvent = (rawEvent: string) => {
     const lines = rawEvent.split("\n");
     let eventType = "message";
@@ -356,6 +392,12 @@ function App() {
       return;
     }
 
+    if (eventType === "input_feedback") {
+      const feedback = payload as InputFeedback;
+      setInputFeedback(feedback);
+      return;
+    }
+
     if (eventType === "choices") {
       setChoices((payload as { choices?: Choice[] }).choices ?? []);
       return;
@@ -366,6 +408,7 @@ function App() {
         turn?: number;
         stats?: Stats;
         flags?: Flags;
+        rebirth?: RebirthState;
         evidencePool?: EvidenceItem[];
         npcRelations?: Record<string, NpcRelation>;
         verdictOutlook?: VerdictOutlook;
@@ -376,6 +419,7 @@ function App() {
       setTurn((prev) => typed.turn ?? prev);
       if (typed.stats) setStats(typed.stats);
       if (typed.flags) setFlags(typed.flags);
+      if (typed.rebirth) setRebirth(typed.rebirth);
       if (typed.evidencePool) setEvidencePool(typed.evidencePool);
       if (typed.npcRelations) setNpcRelations(typed.npcRelations);
       if (typed.verdictOutlook) setVerdictOutlook(typed.verdictOutlook);
@@ -461,12 +505,14 @@ function App() {
       setProgress(state.progress);
       setStats(state.stats);
       setFlags(state.flags);
+      setRebirth(state.rebirth);
       setEvidencePool(state.evidencePool);
       setNpcRelations(state.npcRelations);
       setVerdictOutlook(state.verdictOutlook);
       setTurn(state.turn);
       setStreamingText("");
       streamingRef.current = "";
+      setInputFeedback(null);
       setStatus("读档完成");
     } catch (error) {
       setStatus(`读档失败：${(error as Error).message}`);
@@ -532,7 +578,7 @@ function App() {
                   <Scale className="h-5 w-5 text-cyan-300" />
                   案情导入
                 </CardTitle>
-                <CardDescription className="text-slate-400">重生法庭悬疑模拟：你知道真相，但必须让证据先于记忆发声。</CardDescription>
+                <CardDescription className="text-slate-400">重生法庭悬疑模拟：我知道真相，但必须让证据先于记忆发声。</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
@@ -606,9 +652,51 @@ function App() {
                   <Radar className="h-5 w-5 text-cyan-300" />
                   本轮策略
                 </CardTitle>
-                <CardDescription className="text-slate-400">每个策略会影响证据完整度、司法信任与舆情风险。</CardDescription>
+                <CardDescription className="text-slate-400">
+                  你可以点击策略卡片，或直接输入自然语言指令（系统会自动归并并保底兜底）。
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                  <Input
+                    value={actionInput}
+                    onChange={(e) => setActionInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleUserInputSubmit();
+                      }
+                    }}
+                    disabled={busy || !initialized}
+                    placeholder="例如：我想先重构时间线，再质疑法医鉴定"
+                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-500"
+                  />
+                  <Button
+                    onClick={handleUserInputSubmit}
+                    disabled={busy || !initialized}
+                    className="bg-cyan-500 text-slate-950 hover:bg-cyan-400"
+                  >
+                    发送指令
+                  </Button>
+                </div>
+
+                {inputFeedback ? (
+                  <div
+                    className={cn(
+                      "rounded-md border px-3 py-2 text-xs",
+                      inputFeedback.fallbackUsed
+                        ? "border-amber-300/35 bg-amber-500/10 text-amber-100"
+                        : "border-cyan-300/30 bg-cyan-500/10 text-cyan-100"
+                    )}
+                  >
+                    <p>
+                      系统识别：{inputFeedback.resolvedChoiceTitle}（置信度{" "}
+                      {Math.round(inputFeedback.confidence * 100)}%）
+                    </p>
+                    <p className="mt-1 text-[11px] opacity-90">{inputFeedback.reason}</p>
+                  </div>
+                ) : null}
+
                 <div className="grid grid-cols-3 gap-3">
                   {choices.map((choice) => (
                     <button
@@ -648,6 +736,23 @@ function App() {
                 <MetricRow label="陪审偏置" value={stats.juryBias} />
                 <MetricRow label="公众压力" value={stats.publicPressure} />
                 <MetricRow label="证据完整度" value={stats.evidenceIntegrity} />
+
+                <div className="rounded-md border border-cyan-300/25 bg-cyan-500/10 p-2 text-xs text-cyan-100">
+                  <p>重生循环：第 {rebirth.loop} 周目</p>
+                  <p>记忆保留：{Math.round(rebirth.memoryRetention * 100)}%</p>
+                  <p>命运阻力：{rebirth.fate}</p>
+                </div>
+
+                {rebirth.knownTruths.length > 0 ? (
+                  <div className="space-y-1 rounded-md border border-slate-700 bg-slate-900/60 p-2">
+                    <p className="text-xs text-slate-400">保留线索</p>
+                    {rebirth.knownTruths.map((truth) => (
+                      <p key={truth} className="text-xs text-slate-200">
+                        - {truth}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
 
                 <Separator className="bg-slate-700/70" />
 

@@ -27,15 +27,20 @@ export const createGameController = (gameService: GameService) => {
 
   const sessionAction = async (req: Request, res: Response, next: NextFunction) => {
     const sessionId = req.params.id;
-    const body = req.body as { choiceId?: string };
+    const body = req.body as { choiceId?: string; userInput?: string };
     const choiceId = body?.choiceId?.trim();
-    if (!choiceId) {
-      next(new AppError(400, "choiceId is required", "CHOICE_REQUIRED"));
+    const userInput = body?.userInput;
+
+    if (!choiceId && !userInput?.trim()) {
+      next(new AppError(400, "choiceId or userInput is required", "ACTION_INPUT_REQUIRED"));
       return;
     }
 
     try {
-      const result = await gameService.processTurn(sessionId, choiceId);
+      const { result, inputFeedback } = await gameService.processTurn(sessionId, {
+        choiceId,
+        userInput
+      });
       setupSse(res);
       if (typeof res.flushHeaders === "function") {
         res.flushHeaders();
@@ -47,6 +52,7 @@ export const createGameController = (gameService: GameService) => {
       });
 
       const chunks = splitNarrative(result.narrative, 34);
+      sendSseEvent(res, "input_feedback", inputFeedback);
       for (const chunk of chunks) {
         if (closed) {
           return;
@@ -67,6 +73,7 @@ export const createGameController = (gameService: GameService) => {
         evidencePool: result.evidencePool,
         npcRelations: result.npcRelations,
         verdictOutlook: result.verdictOutlook,
+        rebirth: result.rebirth,
         statChanges: result.statChanges,
         events: result.events
       });

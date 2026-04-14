@@ -5,6 +5,18 @@ export type Choice = {
   impactHint: string;
 };
 
+export type InputFeedback = {
+  mode: "choice_id" | "user_input";
+  status: "resolved" | "fallback" | "invalid";
+  rawInput: string;
+  normalizedInput: string;
+  resolvedChoiceId: string;
+  resolvedChoiceTitle: string;
+  confidence: number;
+  fallbackUsed: boolean;
+  reason: string;
+};
+
 export type Progress = {
   chapter: number;
   chapterTitle: string;
@@ -18,6 +30,13 @@ export type Stats = {
   juryBias: number;
   publicPressure: number;
   evidenceIntegrity: number;
+};
+
+export type RebirthState = {
+  loop: number;
+  memoryRetention: number;
+  knownTruths: string[];
+  fate: number;
 };
 
 export type Flags = {
@@ -47,6 +66,7 @@ export type InitResponse = {
   progress: Progress;
   stats: Stats;
   flags: Flags;
+  rebirth: RebirthState;
   evidencePool: EvidenceItem[];
   npcRelations: Record<string, NpcRelation>;
   verdictOutlook: "truth" | "wrongful" | "misled" | "interference" | "undetermined";
@@ -86,6 +106,7 @@ export type GameStateResponse = {
   progress: Progress;
   stats: Stats;
   flags: Flags;
+  rebirth: RebirthState;
   evidencePool: EvidenceItem[];
   npcRelations: Record<string, NpcRelation>;
   verdictOutlook: "truth" | "wrongful" | "misled" | "interference" | "undetermined";

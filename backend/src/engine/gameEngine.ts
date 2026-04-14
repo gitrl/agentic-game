@@ -7,6 +7,7 @@ import type {
   InitPayload,
   NpcRelation,
   Progress,
+  RebirthState,
   Stats,
   TokenUsage
 } from "../types/game.js";
@@ -38,6 +39,13 @@ const buildDefaultRelations = (): Record<string, NpcRelation> => ({
   presidingJudge: { trust: 50, stance: "neutral" },
   keyWitness: { trust: 35, stance: "neutral" },
   investigatorXu: { trust: 55, stance: "ally" }
+});
+
+const buildDefaultRebirthState = (): RebirthState => ({
+  loop: 1,
+  memoryRetention: 0.6,
+  knownTruths: ["林策并非直接致死者"],
+  fate: 72
 });
 
 const buildInitialEvidence = (): EvidenceItem[] => {
@@ -98,6 +106,7 @@ export const createEmptyState = (sessionId: string): GameState => ({
     midSummary: [],
     longAnchors: []
   },
+  rebirth: buildDefaultRebirthState(),
   replay: []
 });
 
@@ -110,6 +119,7 @@ export const initializeGame = (
   progress: Progress;
   stats: Stats;
   flags: Flags;
+  rebirth: RebirthState;
   evidencePool: EvidenceItem[];
   npcRelations: Record<string, NpcRelation>;
   verdictOutlook: GameState["verdictOutlook"];
@@ -127,27 +137,31 @@ export const initializeGame = (
   state.flags = buildDefaultFlags();
   state.evidencePool = buildInitialEvidence();
   state.npcRelations = buildDefaultRelations();
+  state.rebirth = buildDefaultRebirthState();
   state.verdictOutlook = "undetermined";
 
   const prologue = [
     `第${state.progress.chapter}章《${state.progress.chapterTitle}》第${state.progress.sceneInChapter}/${state.progress.maxScenesInChapter}幕。`,
-    `${state.player.name}以${state.player.role}身份进入${COURTROOM_LOCALES[0]}，你把${state.player.starterItem}放在桌角。`,
+    `我是${state.player.name}，以${state.player.role}身份走进${COURTROOM_LOCALES[0]}，把${state.player.starterItem}压在案卷边缘。`,
     "【案件名称】青禾江堤坠亡案",
     "【被告身份】林策，27岁，网约车司机；上一世被以“故意杀人”判处死刑。",
     "【死者身份】梁蔚，市重点项目审计员，案发前一周刚提交一份牵涉多方利益的审计复核意见。",
     "【检方核心主张】林策在 23:34 于江堤冲突中将梁蔚推落护栏，随后伪造报警时间并清理车内痕迹。",
-    "【你记忆中的真相】真正作案者并非林策，但你不能直接说出“你来自未来”。",
+    "【我记忆中的真相】真正作案者并非林策，但我不能直接说出“我来自未来”。",
     "【当前异常点】监控黑屏 43 秒、120 接警时间错位 7 分钟、首轮法医鉴定缺失原始样本附录。",
-    "【规则约束】任何超前信息都会被认定为诱导证词，你必须让证据自己说话。",
-    `【本局目标】利用“${state.player.talent}”推进证据链与程序战，在终审前扭转冤案判决。`
+    "【规则约束】任何超前信息都会被认定为诱导证词，我只能让证据先开口。",
+    `【重生参数】循环次数 ${state.rebirth.loop}，记忆保留 ${Math.round(
+      state.rebirth.memoryRetention * 100
+    )}%，命运阻力 ${state.rebirth.fate}。`,
+    `【本局目标】依靠“${state.player.talent}”推进证据链与程序战，在终审前扭转冤案判决。`
   ].join("\n");
 
   state.currentNarrative = prologue;
   state.currentChoices = buildChoices(state.turn, state.stats, state.flags, []);
-  state.historySummaries = ["序章：你回到冤案宣判前，案件进入实质审理阶段。"];
+  state.historySummaries = ["序章：我回到冤案宣判前，案件进入实质审理阶段。"];
   state.memory = {
     shortWindow: [prologue],
-    midSummary: ["前置背景建立完成：你掌握真相但必须隐藏重生信息。"],
+    midSummary: ["前置背景建立完成：我掌握真相但必须隐藏重生信息。"],
     longAnchors: ["核心目标：不暴露重生记忆，靠证据链改写判决结果"]
   };
   state.replay = [];
@@ -160,7 +174,8 @@ export const initializeGame = (
     flags: state.flags,
     evidencePool: state.evidencePool,
     npcRelations: state.npcRelations,
-    verdictOutlook: state.verdictOutlook
+    verdictOutlook: state.verdictOutlook,
+    rebirth: state.rebirth
   };
 };
 
@@ -179,6 +194,9 @@ export const processAction = (state: GameState, choiceId: string): ActionResult 
 
   const effects = applyChoiceEffects(state, chosen.id);
   applyMilestoneEvents(state, effects.events, effects.statChanges);
+  applyFateResistance(state, chosen.id, effects.events, effects.statChanges);
+  state.verdictOutlook = evaluateVerdictOutlook(state);
+  maybeTriggerRebirth(state, effects.events, effects.statChanges);
   state.verdictOutlook = evaluateVerdictOutlook(state);
 
   const narrative = composeNarrative(state, chosen, effects.beat, effects.events);
@@ -216,7 +234,8 @@ export const processAction = (state: GameState, choiceId: string): ActionResult 
     flags: state.flags,
     evidencePool: state.evidencePool,
     npcRelations: state.npcRelations,
-    verdictOutlook: state.verdictOutlook
+    verdictOutlook: state.verdictOutlook,
+    rebirth: state.rebirth
   };
 };
 
@@ -323,7 +342,7 @@ const applyChoiceEffects = (
 ): { statChanges: string[]; events: string[]; beat: string } => {
   const statChanges: string[] = [];
   const events: string[] = ["turn_advanced"];
-  let beat = "你暂时稳住了局势，没有暴露那段不可言说的记忆";
+  let beat = "我暂时稳住了局势，没有暴露那段不可言说的记忆";
 
   switch (choiceId) {
     case "examine_evidence": {
@@ -333,7 +352,7 @@ const applyChoiceEffects = (
       tuneEvidence(state.evidencePool, "verified", 7, "证据链校验完成，封存与调取逻辑更完整");
       statChanges.push("truth_score +6", "evidence_integrity +8", "public_pressure -2");
       events.push("clue_confirmed");
-      beat = "你把支离破碎的证据重新钉回可验证事实";
+      beat = "我把支离破碎的证据重新钉回可验证事实";
       break;
     }
     case "cross_examine": {
@@ -343,7 +362,7 @@ const applyChoiceEffects = (
       shiftRelation(state.npcRelations.keyWitness, 6);
       statChanges.push("judge_trust +5", "truth_score +4", "public_pressure +3");
       events.push("testimony_pressure", "conflict_spike");
-      beat = "你绕开“我早就知道”的危险表述，逼证人自行说出破绽";
+      beat = "我绕开“早已知情”的危险表述，逼证人自行说出破绽";
       break;
     }
     case "timeline_rebuild": {
@@ -353,7 +372,7 @@ const applyChoiceEffects = (
       tuneEvidence(state.evidencePool, "verified", 5, "案发十分钟时间线重建完成，关键空档缩小");
       statChanges.push("evidence_integrity +6", "truth_score +5", "jury_bias -4");
       events.push("timeline_fixed");
-      beat = "你用客观记录重放案发过程，检方叙事开始松动";
+      beat = "我用客观记录重放案发过程，检方叙事开始松动";
       break;
     }
     case "file_motion": {
@@ -362,7 +381,7 @@ const applyChoiceEffects = (
       state.stats.publicPressure = clamp(state.stats.publicPressure + 2, 0, 100);
       statChanges.push("judge_trust +7", "jury_bias -6", "public_pressure +2");
       events.push("procedure_advantage");
-      beat = "程序申请获准，庭审节奏重新落入你的掌控";
+      beat = "程序申请获准，庭审节奏重新落入我的掌控";
       break;
     }
     case "private_probe": {
@@ -373,7 +392,7 @@ const applyChoiceEffects = (
       tuneEvidence(state.evidencePool, "challenged", 4, "暗线拿到新线索，但其合法性仍需补强");
       statChanges.push("truth_score +8", "public_pressure +6", "judge_trust -2");
       events.push("shadow_lead", "risk_taken");
-      beat = "你撬开了通往真凶的裂缝，也把自己推向高风险地带";
+      beat = "我撬开了通往真凶的裂缝，也把自己推向高风险地带";
       break;
     }
     case "media_guidance": {
@@ -382,7 +401,7 @@ const applyChoiceEffects = (
       state.stats.truthScore = clamp(state.stats.truthScore + 2, 0, 100);
       statChanges.push("public_pressure -7", "jury_bias -3", "truth_score +2");
       events.push("narrative_control");
-      beat = "你把舆论焦点拉回证据，而不是让“宿命论”主导法庭";
+      beat = "我把舆论焦点拉回证据，而不是让“宿命论”主导法庭";
       break;
     }
     case "stabilize_court": {
@@ -391,7 +410,7 @@ const applyChoiceEffects = (
       state.stats.evidenceIntegrity = clamp(state.stats.evidenceIntegrity + 2, 0, 100);
       statChanges.push("public_pressure -5", "judge_trust +3", "evidence_integrity +2");
       events.push("recovery_window");
-      beat = "你争取到缓冲窗口，危险的庭审节奏暂时降温";
+      beat = "我争取到缓冲窗口，危险的庭审节奏暂时降温";
       break;
     }
     case "challenge_forensics": {
@@ -401,7 +420,7 @@ const applyChoiceEffects = (
       tuneEvidence(state.evidencePool, "verified", 8, "二次鉴定意见被采信，伪证风险下降");
       statChanges.push("evidence_integrity +9", "judge_trust +4", "forged_evidence_admitted -> false");
       events.push("forensics_rebuttal");
-      beat = "你用二次鉴定完成反击，误导证据链开始崩解";
+      beat = "我用二次鉴定完成反击，误导证据链开始崩解";
       break;
     }
     default: {
@@ -409,7 +428,7 @@ const applyChoiceEffects = (
       state.stats.publicPressure = clamp(state.stats.publicPressure - 1, 0, 100);
       statChanges.push("judge_trust +2", "public_pressure -1");
       events.push("stabilized");
-      beat = "你稳住发问节奏，避免局势进一步失控";
+      beat = "我稳住发问节奏，避免局势进一步失控";
       break;
     }
   }
@@ -455,6 +474,139 @@ const applyMilestoneEvents = (state: GameState, events: string[], statChanges: s
     events.push("interference_confirmed");
   }
 
+};
+
+const applyFateResistance = (
+  state: GameState,
+  choiceId: string,
+  events: string[],
+  statChanges: string[]
+): void => {
+  let delta = 0;
+
+  switch (choiceId) {
+    case "private_probe":
+      delta += 6;
+      break;
+    case "cross_examine":
+      delta += 4;
+      break;
+    case "file_motion":
+      delta += 2;
+      break;
+    case "media_guidance":
+      delta -= 3;
+      break;
+    case "timeline_rebuild":
+      delta -= 2;
+      break;
+    case "examine_evidence":
+      delta -= 2;
+      break;
+    case "stabilize_court":
+      delta -= 4;
+      break;
+    case "challenge_forensics":
+      delta -= 3;
+      break;
+    default:
+      break;
+  }
+
+  if (events.includes("conflict_spike")) {
+    delta += 3;
+  }
+  if (events.includes("interference_risk")) {
+    delta += 6;
+  }
+  if (events.includes("forged_evidence")) {
+    delta += 5;
+  }
+  if (events.includes("clue_confirmed")) {
+    delta -= 2;
+  }
+  if (events.includes("timeline_fixed")) {
+    delta -= 2;
+  }
+
+  if (delta !== 0) {
+    const before = state.rebirth.fate;
+    state.rebirth.fate = clamp(state.rebirth.fate + delta, 0, 100);
+    const actual = state.rebirth.fate - before;
+    if (actual !== 0) {
+      statChanges.push(`fate ${actual > 0 ? `+${actual}` : actual}`);
+    }
+  }
+
+  syncKnownTruthsFromEvents(state, events);
+};
+
+const syncKnownTruthsFromEvents = (state: GameState, events: string[]): void => {
+  const truths: string[] = [];
+  if (events.includes("clue_confirmed")) {
+    truths.push("证据链存在人为断点");
+  }
+  if (events.includes("timeline_fixed")) {
+    truths.push("案发时间线并不支持检方单一路径");
+  }
+  if (events.includes("witness_flip")) {
+    truths.push("关键证人的原始口供存在保留或误导");
+  }
+  if (events.includes("forensics_rebuttal")) {
+    truths.push("争议鉴定结果并非唯一解释");
+  }
+  if (events.includes("interference_confirmed")) {
+    truths.push("案件存在场外力量干预");
+  }
+
+  for (const truth of truths) {
+    if (!state.rebirth.knownTruths.includes(truth)) {
+      state.rebirth.knownTruths.push(truth);
+    }
+  }
+
+  state.rebirth.knownTruths = state.rebirth.knownTruths.slice(-8);
+};
+
+const maybeTriggerRebirth = (state: GameState, events: string[], statChanges: string[]): void => {
+  const doomedOutlook =
+    state.verdictOutlook === "wrongful" ||
+    state.verdictOutlook === "misled" ||
+    state.verdictOutlook === "interference";
+  const fateOverflow = state.rebirth.fate >= 88;
+  const shouldRebirth = state.turn >= 6 && doomedOutlook && fateOverflow;
+
+  if (!shouldRebirth) {
+    return;
+  }
+
+  events.push("rebirth_triggered");
+
+  state.rebirth.loop += 1;
+  state.rebirth.memoryRetention = Number(clamp(state.rebirth.memoryRetention - 0.06, 0.3, 0.9).toFixed(2));
+
+  const keepCount = Math.max(1, Math.ceil(state.rebirth.knownTruths.length * state.rebirth.memoryRetention));
+  state.rebirth.knownTruths = state.rebirth.knownTruths.slice(-keepCount);
+  state.rebirth.fate = clamp(state.rebirth.fate - 24, 30, 100);
+
+  state.stats.truthScore = clamp(Math.round((state.stats.truthScore + 42) / 2), 28, 72);
+  state.stats.judgeTrust = clamp(Math.round((state.stats.judgeTrust + 48) / 2), 30, 74);
+  state.stats.juryBias = clamp(Math.round(state.stats.juryBias * 0.35), -60, 60);
+  state.stats.publicPressure = clamp(Math.round((state.stats.publicPressure + 38) / 2), 20, 82);
+  state.stats.evidenceIntegrity = clamp(Math.round((state.stats.evidenceIntegrity + 45) / 2), 30, 76);
+
+  state.flags.forgedEvidenceAdmitted = false;
+  state.flags.interferenceDetected = false;
+  if (state.stats.truthScore < 60) {
+    state.flags.keyWitnessFlipped = false;
+  }
+
+  statChanges.push(
+    `loop +1 -> ${state.rebirth.loop}`,
+    `memory_retention -> ${Math.round(state.rebirth.memoryRetention * 100)}%`,
+    `known_truths -> ${state.rebirth.knownTruths.length}`,
+    `fate -> ${state.rebirth.fate}`
+  );
 };
 
 const tuneEvidence = (
@@ -516,16 +668,19 @@ const composeNarrative = (
 
   return [
     `第${state.progress.chapter}章《${state.progress.chapterTitle}》第${state.progress.sceneInChapter}/${state.progress.maxScenesInChapter}幕。`,
-    `${state.player.name}在${courtroom}选择“${choice.title}”，${beat}。`,
+    `我在${courtroom}选择“${choice.title}”，${beat}。`,
     `${eventLine}当前判决走向评估：${outlook}。`,
     `法官信任 ${state.stats.judgeTrust}，真相分 ${state.stats.truthScore}，证据完整度 ${state.stats.evidenceIntegrity}。`,
-    "你知道真相，但此刻必须让证据先开口，判决才会真正被改写。"
-  ].join("");
+    `循环 ${state.rebirth.loop}，记忆保留 ${Math.round(
+      state.rebirth.memoryRetention * 100
+    )}%，命运阻力 ${state.rebirth.fate}。`,
+    "我知道真相，但此刻不能直说，必须让证据先发声。"
+  ].join("\n");
 };
 
 const summarizeTurn = (state: GameState, choice: Choice, events: string[]): string => {
   const eventTag = events[events.length - 1] ?? "normal_progress";
-  return `第${state.turn}轮选择“${choice.title}”，事件标签：${eventTag}，判决倾向：${state.verdictOutlook}。`;
+  return `第${state.turn}轮我执行“${choice.title}”，事件标签：${eventTag}，判决倾向：${state.verdictOutlook}，循环：${state.rebirth.loop}。`;
 };
 
 const estimateTokenUsage = (
@@ -568,8 +723,11 @@ const updateMemoryBundles = (state: GameState, narrative: string, summary: strin
 };
 
 const buildEventLine = (events: string[]): string => {
+  if (events.includes("rebirth_triggered")) {
+    return "审判在失控边缘崩裂，我再次被抛回既视感的起点，只剩部分线索还留在脑海。";
+  }
   if (events.includes("interference_confirmed")) {
-    return "你确认有场外力量在持续干预证据链，审判程序受到实质冲击。";
+    return "我确认有场外力量在持续干预证据链，审判程序受到实质冲击。";
   }
   if (events.includes("witness_flip")) {
     return "关键证人突然改口，原本稳固的控方叙事出现裂口。";
@@ -583,7 +741,7 @@ const buildEventLine = (events: string[]): string => {
   if (events.includes("conflict_spike")) {
     return "庭上攻防节奏骤增，任何一句话都可能触发连锁反应。";
   }
-  return "表面平静之下，证词、程序与利益三条线仍在暗中角力。";
+  return "表面平静之下，我能感觉到证词、程序与利益三条线仍在暗中角力。";
 };
 
 const outlookText = (outlook: GameState["verdictOutlook"]): string => {
@@ -633,6 +791,19 @@ const normalizeChanges = (
   const afterWitnessTrust = after.npcRelations.keyWitness?.trust ?? 0;
   pushNumericDiff(diff, "key_witness_trust", beforeWitnessTrust, afterWitnessTrust);
 
+  pushNumericDiff(diff, "fate", before.rebirth.fate, after.rebirth.fate);
+  if (before.rebirth.loop !== after.rebirth.loop) {
+    diff.push(`loop +${after.rebirth.loop - before.rebirth.loop}`);
+  }
+  if (before.rebirth.memoryRetention !== after.rebirth.memoryRetention) {
+    const beforePct = Math.round(before.rebirth.memoryRetention * 100);
+    const afterPct = Math.round(after.rebirth.memoryRetention * 100);
+    diff.push(`memory_retention ${beforePct}% -> ${afterPct}%`);
+  }
+  if (before.rebirth.knownTruths.length !== after.rebirth.knownTruths.length) {
+    diff.push(`known_truths ${before.rebirth.knownTruths.length} -> ${after.rebirth.knownTruths.length}`);
+  }
+
   const beforeEvidence = before.evidencePool[0];
   const afterEvidence = after.evidencePool[0];
   if (beforeEvidence && afterEvidence && beforeEvidence.status !== afterEvidence.status) {
@@ -655,12 +826,14 @@ const snapshotState = (state: GameState) => {
       stats: state.stats,
       flags: state.flags,
       npcRelations: state.npcRelations,
-      evidencePool: state.evidencePool
+      evidencePool: state.evidencePool,
+      rebirth: state.rebirth
     })
   ) as {
     stats: Stats;
     flags: Flags;
     npcRelations: Record<string, NpcRelation>;
     evidencePool: EvidenceItem[];
+    rebirth: RebirthState;
   };
 };

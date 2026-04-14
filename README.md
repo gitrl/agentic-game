@@ -100,6 +100,7 @@ npm run dev:frontend
 - 启动日志会显示当前仓储模式：`repository=memory` 或 `repository=mongodb`。
 - LLM 模式：设置 `LLM_ENABLED=true` 且提供 `OPENAI_API_KEY` 后，后端会通过 OpenAI 兼容接口调用 `qwen3.5-plus` 对每轮叙事进行润色。
 - 当网络超时或连续失败时，系统会在软超时后快速回退，并进入短暂熔断冷却，避免每轮都被 LLM 阻塞。
+- 叙事润色系统提示词位于 `backend/src/prompts/narrativeSystemPrompt.ts`，可独立维护与迭代。
 
 ## 5. 核心接口
 
@@ -112,6 +113,7 @@ npm run dev:frontend
 - `GET /sessions/:id/replay` 获取回放与 Token 汇总
 
 SSE 事件：
+- `input_feedback`
 - `narrative_delta`
 - `choices`
 - `state_patch`

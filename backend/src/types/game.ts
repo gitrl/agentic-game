@@ -39,6 +39,13 @@ export type MemoryBundle = {
   longAnchors: string[];
 };
 
+export type RebirthState = {
+  loop: number;
+  memoryRetention: number;
+  knownTruths: string[];
+  fate: number;
+};
+
 export type Progress = {
   chapter: number;
   chapterTitle: string;
@@ -84,6 +91,7 @@ export type GameState = {
   currentChoices: Choice[];
   historySummaries: string[];
   memory: MemoryBundle;
+  rebirth: RebirthState;
   replay: ReplayEntry[];
 };
 
@@ -95,7 +103,22 @@ export type InitPayload = {
 };
 
 export type ActionPayload = {
-  choiceId: string;
+  choiceId?: string;
+  userInput?: string;
+};
+
+export type InputFeedbackStatus = "resolved" | "fallback" | "invalid";
+
+export type InputFeedback = {
+  mode: "choice_id" | "user_input";
+  status: InputFeedbackStatus;
+  rawInput: string;
+  normalizedInput: string;
+  resolvedChoiceId: string;
+  resolvedChoiceTitle: string;
+  confidence: number;
+  fallbackUsed: boolean;
+  reason: string;
 };
 
 export type ActionResult = {
@@ -112,6 +135,7 @@ export type ActionResult = {
   evidencePool: EvidenceItem[];
   npcRelations: Record<string, NpcRelation>;
   verdictOutlook: GameState["verdictOutlook"];
+  rebirth: RebirthState;
 };
 
 export type SaveSnapshot = {

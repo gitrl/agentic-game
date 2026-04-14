@@ -2,8 +2,11 @@ import { createEmptyState, initializeGame, processAction } from "../engine/gameE
 import { AppError } from "../core/errors.js";
 import type { GameRepository } from "../repositories/gameRepository.js";
 import { LlmNarrativeService } from "./llmNarrativeService.js";
+import { resolveTurnInput } from "./inputResolver.js";
 import type {
+  ActionPayload,
   ActionResult,
+  InputFeedback,
   InitPayload,
   SaveSnapshot,
   TokenUsage
@@ -53,25 +56,45 @@ export class GameService {
     };
   }
 
-  async processTurn(sessionId: string, choiceId: string): Promise<ActionResult> {
+  async processTurn(
+    sessionId: string,
+    payload: ActionPayload
+  ): Promise<{ result: ActionResult; inputFeedback: InputFeedback }> {
     const state = await this.requireSession(sessionId);
 
     if (!state.initialized) {
       throw new AppError(400, "Session is not initialized", "SESSION_NOT_INITIALIZED");
     }
-    if (!choiceId?.trim()) {
-      throw new AppError(400, "choiceId is required", "CHOICE_REQUIRED");
+    if (!payload.choiceId?.trim() && !payload.userInput?.trim()) {
+      throw new AppError(400, "choiceId or userInput is required", "ACTION_INPUT_REQUIRED");
     }
 
+    const { resolvedChoiceId, feedback } = resolveTurnInput({
+      choiceId: payload.choiceId,
+      userInput: payload.userInput,
+      currentChoices: state.currentChoices
+    });
+
     try {
-      const result = processAction(state, choiceId);
+      const result = processAction(state, resolvedChoiceId);
       await this.applyLlmEnhancementIfEnabled(state, result);
       await this.repository.upsertSession(state);
-      return result;
+      return {
+        result,
+        inputFeedback: feedback
+      };
     } catch (error) {
-      const recovered = this.buildRecoveryResult(state, choiceId, error);
+      const recovered = this.buildRecoveryResult(state, resolvedChoiceId, error);
       await this.repository.upsertSession(state);
-      return recovered;
+      return {
+        result: recovered,
+        inputFeedback: {
+          ...feedback,
+          status: "fallback",
+          fallbackUsed: true,
+          reason: `${feedback.reason} 引擎异常，已自动切换保底流程。`
+        }
+      };
     }
   }
 
@@ -177,7 +200,8 @@ export class GameService {
       flags: state.flags,
       evidencePool: state.evidencePool,
       npcRelations: state.npcRelations,
-      verdictOutlook: state.verdictOutlook
+      verdictOutlook: state.verdictOutlook,
+      rebirth: state.rebirth
     };
   }
 
