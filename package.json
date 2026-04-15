@@ -2,9 +2,12 @@
   "name": "legal-suspense-interactive-game",
   "private": true,
   "scripts": {
-    "dev": "sh -c 'npm run dev:backend & npm run dev:frontend & wait'",
+    "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm run build --prefix backend && npm run build --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
