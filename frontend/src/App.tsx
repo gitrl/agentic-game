@@ -24,6 +24,7 @@ import { Separator } from "./components/ui/separator";
 import { cn } from "./lib/utils";
 import type {
   Choice,
+  EndingType,
   EvidenceItem,
   Flags,
   GameStateResponse,
@@ -37,6 +38,7 @@ import type {
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+const STORAGE_KEY = "agentic-game-session-id";
 const DEFAULT_ROLE = "辩护律师";
 const DEFAULT_TALENT = "交叉质证";
 const DEFAULT_STARTER_ITEM = "案卷标注笔";
@@ -123,6 +125,10 @@ function App() {
   const [latestSaveId, setLatestSaveId] = useState("");
   const [replayData, setReplayData] = useState<ReplayResponse | null>(null);
 
+  const [gameOver, setGameOver] = useState(false);
+  const [endingType, setEndingType] = useState<EndingType | null>(null);
+  const [endingNarrative, setEndingNarrative] = useState("");
+
   const progressLabel = useMemo(() => {
     return `第${progress.chapter}章《${progress.chapterTitle}》 ${progress.sceneInChapter}/${progress.maxScenesInChapter}幕`;
   }, [progress]);
@@ -141,6 +147,9 @@ function App() {
   const setActiveSessionId = (nextSessionId: string) => {
     sessionIdRef.current = nextSessionId;
     setSessionId(nextSessionId);
+    if (nextSessionId) {
+      localStorage.setItem(STORAGE_KEY, nextSessionId);
+    }
   };
 
   const stopPlayback = () => {
@@ -198,6 +207,51 @@ function App() {
     };
   }, []);
 
+  // P2：页面加载时尝试从 localStorage 恢复上次会话
+  useEffect(() => {
+    const savedId = localStorage.getItem(STORAGE_KEY);
+    if (!savedId) return;
+
+    const restore = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/sessions/${savedId}/state`);
+        if (!res.ok) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+        const state = (await res.json()) as GameStateResponse;
+        if (!state.initialized) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+        sessionIdRef.current = savedId;
+        setSessionId(savedId);
+        setInitialized(true);
+        setStoryFeed(["[已自动恢复上次会话进度]", state.currentNarrative]);
+        setChoices(state.currentChoices);
+        setProgress(state.progress);
+        setStats(state.stats);
+        setFlags(state.flags);
+        setRebirth(state.rebirth);
+        setEvidencePool(state.evidencePool);
+        setNpcRelations(state.npcRelations);
+        setVerdictOutlook(state.verdictOutlook);
+        setTurn(state.turn);
+        if (state.gameOver) {
+          setGameOver(true);
+          setEndingType(state.endingType ?? null);
+          setEndingNarrative(state.endingNarrative ?? "");
+        }
+        setStatus("已自动恢复上次会话进度");
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    };
+
+    void restore();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const ensureSession = async (): Promise<string> => {
     if (sessionIdRef.current) {
       return sessionIdRef.current;
@@ -231,6 +285,9 @@ function App() {
     setLastEvents([]);
     setLastTokenUsage(null);
     setReplayData(null);
+    setGameOver(false);
+    setEndingType(null);
+    setEndingNarrative("");
   };
 
   const handleInit = async () => {
@@ -446,6 +503,14 @@ function App() {
       } else {
         pendingDoneSummaryRef.current = summary;
       }
+      return;
+    }
+
+    if (eventType === "game_over") {
+      const data = payload as { endingType?: string; endingNarrative?: string };
+      setGameOver(true);
+      setEndingType((data.endingType as EndingType) ?? null);
+      setEndingNarrative(data.endingNarrative ?? "");
     }
   };
 
@@ -513,6 +578,9 @@ function App() {
       setStreamingText("");
       streamingRef.current = "";
       setInputFeedback(null);
+      setGameOver(state.gameOver ?? false);
+      setEndingType(state.endingType ?? null);
+      setEndingNarrative(state.endingNarrative ?? "");
       setStatus("读档完成");
     } catch (error) {
       setStatus(`读档失败：${(error as Error).message}`);
@@ -667,7 +735,7 @@ function App() {
                         void handleUserInputSubmit();
                       }
                     }}
-                    disabled={busy || !initialized}
+                    disabled={busy || !initialized || gameOver}
                     placeholder="例如：我想先重构时间线，再质疑法医鉴定"
                     className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-500"
                   />
@@ -707,7 +775,7 @@ function App() {
                         "disabled:cursor-not-allowed disabled:opacity-50"
                       )}
                       onClick={() => handleChoice(choice.id)}
-                      disabled={busy || !initialized}
+                      disabled={busy || !initialized || gameOver}
                     >
                       <div className="absolute inset-x-0 top-0 h-[1px] bg-cyan-300/70 opacity-0 transition group-hover:opacity-100" />
                       <p className="mb-2 text-base font-semibold text-slate-100">{choice.title}</p>
@@ -873,6 +941,45 @@ function App() {
           </aside>
         </section>
       </div>
+
+      {/* P1：结局画面覆盖层 */}
+      {gameOver ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
+          <Card className="tech-panel w-full max-w-2xl border border-cyan-300/30 bg-slate-900/95 shadow-[0_0_60px_rgba(34,211,238,0.15)]">
+            <CardHeader className="space-y-3 pb-4">
+              <Badge className={cn("w-fit border px-3 py-1 text-sm font-semibold", endingToneClass(endingType))}>
+                {endingTypeLabel(endingType)}
+              </Badge>
+              <CardTitle className="text-2xl text-slate-50">终局宣判</CardTitle>
+              <p className="text-sm text-slate-400">
+                第 {rebirth.loop} 周目 · 第 {turn} 轮
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="rounded-lg border border-slate-700/60 bg-slate-800/60 p-4">
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-200">
+                  {endingNarrative}
+                </p>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                <EndingStatItem label="真相分" value={stats.truthScore} />
+                <EndingStatItem label="法官信任" value={stats.judgeTrust} />
+                <EndingStatItem label="陪审偏置" value={stats.juryBias} />
+                <EndingStatItem label="公众压力" value={stats.publicPressure} />
+                <EndingStatItem label="证据完整度" value={stats.evidenceIntegrity} />
+              </div>
+              <Button
+                className="w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400"
+                onClick={handleInit}
+                disabled={busy}
+              >
+                <BrainCircuit className="h-4 w-4" />
+                再试一次（第 {rebirth.loop + 1} 周目）
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </main>
   );
 }
@@ -971,5 +1078,30 @@ const evidenceToneClass = (status: EvidenceItem["status"]): string => {
   }
   return "border-amber-300/35 bg-amber-400/15 text-amber-100";
 };
+
+const endingTypeLabel = (type: EndingType | null): string => {
+  if (type === "truth") return "真相大白";
+  if (type === "wrongful") return "冤案终判";
+  if (type === "misled") return "误导裁决";
+  if (type === "interference") return "权力干预";
+  return "终局裁决";
+};
+
+const endingToneClass = (type: EndingType | null): string => {
+  if (type === "truth") return "border-emerald-300/35 bg-emerald-400/15 text-emerald-100";
+  if (type === "wrongful") return "border-rose-300/35 bg-rose-400/15 text-rose-100";
+  if (type === "misled") return "border-amber-300/35 bg-amber-400/15 text-amber-100";
+  if (type === "interference") return "border-purple-300/35 bg-purple-400/15 text-purple-100";
+  return "border-slate-300/35 bg-slate-400/15 text-slate-100";
+};
+
+function EndingStatItem({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col items-center gap-1 rounded-md border border-slate-700/60 bg-slate-800/60 p-2 text-xs">
+      <span className="text-slate-400">{label}</span>
+      <span className="text-base font-bold text-slate-100">{value}</span>
+    </div>
+  );
+}
 
 export default App;

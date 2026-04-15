@@ -99,6 +99,8 @@ export type ReplayResponse = {
   };
 };
 
+export type EndingType = "truth" | "wrongful" | "misled" | "interference";
+
 export type GameStateResponse = {
   initialized: boolean;
   currentNarrative: string;
@@ -111,4 +113,7 @@ export type GameStateResponse = {
   npcRelations: Record<string, NpcRelation>;
   verdictOutlook: "truth" | "wrongful" | "misled" | "interference" | "undetermined";
   turn: number;
+  gameOver: boolean;
+  endingType: EndingType | null;
+  endingNarrative: string;
 };

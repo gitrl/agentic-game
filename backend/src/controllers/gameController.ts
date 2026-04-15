@@ -80,6 +80,12 @@ export const createGameController = (gameService: GameService) => {
       sendSseEvent(res, "progress", result.progress);
       sendSseEvent(res, "token_usage", result.tokenUsage);
       sendSseEvent(res, "done", { summary: result.summary });
+      if (result.gameOver) {
+        sendSseEvent(res, "game_over", {
+          endingType: result.endingType,
+          endingNarrative: result.endingNarrative
+        });
+      }
       res.end();
     } catch (error) {
       next(error);

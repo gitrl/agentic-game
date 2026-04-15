@@ -76,6 +76,8 @@ export type ReplayEntry = {
   timestamp: string;
 };
 
+export type EndingType = "truth" | "wrongful" | "misled" | "interference";
+
 export type GameState = {
   sessionId: string;
   initialized: boolean;
@@ -93,6 +95,10 @@ export type GameState = {
   memory: MemoryBundle;
   rebirth: RebirthState;
   replay: ReplayEntry[];
+  gameOver: boolean;
+  endingType: EndingType | null;
+  endingNarrative: string;
+  lastChoiceId: string;
 };
 
 export type InitPayload = {
@@ -136,6 +142,9 @@ export type ActionResult = {
   npcRelations: Record<string, NpcRelation>;
   verdictOutlook: GameState["verdictOutlook"];
   rebirth: RebirthState;
+  gameOver: boolean;
+  endingType: EndingType | null;
+  endingNarrative: string;
 };
 
 export type SaveSnapshot = {

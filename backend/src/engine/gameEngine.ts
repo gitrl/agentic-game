@@ -1,6 +1,7 @@
 import type {
   ActionResult,
   Choice,
+  EndingType,
   EvidenceItem,
   Flags,
   GameState,
@@ -107,7 +108,11 @@ export const createEmptyState = (sessionId: string): GameState => ({
     longAnchors: []
   },
   rebirth: buildDefaultRebirthState(),
-  replay: []
+  replay: [],
+  gameOver: false,
+  endingType: null,
+  endingNarrative: "",
+  lastChoiceId: ""
 });
 
 export const initializeGame = (
@@ -157,7 +162,11 @@ export const initializeGame = (
   ].join("\n");
 
   state.currentNarrative = prologue;
-  state.currentChoices = buildChoices(state.turn, state.stats, state.flags, []);
+  state.gameOver = false;
+  state.endingType = null;
+  state.endingNarrative = "";
+  state.lastChoiceId = "";
+  state.currentChoices = buildChoices(state.turn, state.stats, state.flags, [], "");
   state.historySummaries = ["序章：我回到冤案宣判前，案件进入实质审理阶段。"];
   state.memory = {
     shortWindow: [prologue],
@@ -180,6 +189,28 @@ export const initializeGame = (
 };
 
 export const processAction = (state: GameState, choiceId: string): ActionResult => {
+  if (state.gameOver) {
+    return {
+      narrative: state.endingNarrative,
+      summary: "案件已终局，无法继续行动。",
+      choices: [],
+      progress: state.progress,
+      statChanges: [],
+      events: ["game_over"],
+      tokenUsage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0 },
+      turn: state.turn,
+      stats: state.stats,
+      flags: state.flags,
+      evidencePool: state.evidencePool,
+      npcRelations: state.npcRelations,
+      verdictOutlook: state.verdictOutlook,
+      rebirth: state.rebirth,
+      gameOver: true,
+      endingType: state.endingType,
+      endingNarrative: state.endingNarrative
+    };
+  }
+
   const chosen = state.currentChoices.find((item) => item.id === choiceId) ?? {
     id: "strategic_pause",
     title: "临场稳控",
@@ -198,13 +229,17 @@ export const processAction = (state: GameState, choiceId: string): ActionResult 
   state.verdictOutlook = evaluateVerdictOutlook(state);
   maybeTriggerRebirth(state, effects.events, effects.statChanges);
   state.verdictOutlook = evaluateVerdictOutlook(state);
+  checkGameOver(state, effects.events);
 
   const narrative = composeNarrative(state, chosen, effects.beat, effects.events);
   const summary = summarizeTurn(state, chosen, effects.events);
   const tokenUsage = estimateTokenUsage(state, chosen.title, narrative);
 
+  state.lastChoiceId = chosen.id;
   state.currentNarrative = narrative;
-  state.currentChoices = buildChoices(state.turn, state.stats, state.flags, effects.events);
+  state.currentChoices = state.gameOver
+    ? []
+    : buildChoices(state.turn, state.stats, state.flags, effects.events, chosen.id);
   state.historySummaries.push(summary);
   state.historySummaries = state.historySummaries.slice(-20);
   updateMemoryBundles(state, narrative, summary);
@@ -235,7 +270,10 @@ export const processAction = (state: GameState, choiceId: string): ActionResult 
     evidencePool: state.evidencePool,
     npcRelations: state.npcRelations,
     verdictOutlook: state.verdictOutlook,
-    rebirth: state.rebirth
+    rebirth: state.rebirth,
+    gameOver: state.gameOver,
+    endingType: state.endingType,
+    endingNarrative: state.endingNarrative
   };
 };
 
@@ -255,7 +293,8 @@ const buildChoices = (
   turn: number,
   stats: Stats,
   flags: Flags,
-  events: string[]
+  events: string[],
+  lastChoiceId: string
 ): Choice[] => {
   const base: Choice[] = [
     {
@@ -314,7 +353,16 @@ const buildChoices = (
     });
   }
 
-  const offset = turn % base.length;
+  // P4 防重复：确保上一轮已选的选项不作为首个呈现
+  let offset = turn % base.length;
+  if (lastChoiceId) {
+    let attempts = 0;
+    while (base[offset]?.id === lastChoiceId && attempts < base.length) {
+      offset = (offset + 1) % base.length;
+      attempts++;
+    }
+  }
+
   const picks = [
     base[offset],
     base[(offset + 2) % base.length],
@@ -743,6 +791,97 @@ const buildEventLine = (events: string[]): string => {
   }
   return "表面平静之下，我能感觉到证词、程序与利益三条线仍在暗中角力。";
 };
+
+// ─── 结局系统 ───────────────────────────────────────────────────────────────
+
+const checkGameOver = (state: GameState, events: string[]): void => {
+  if (state.gameOver) return;
+  // 重生触发当轮不判定结局
+  if (events.includes("rebirth_triggered")) return;
+
+  const isMaxTurn = state.turn >= 50;
+  const isEarlyVictory =
+    state.verdictOutlook === "truth" &&
+    state.turn >= 30 &&
+    state.stats.truthScore >= 78 &&
+    state.stats.evidenceIntegrity >= 72;
+
+  if (!isMaxTurn && !isEarlyVictory) return;
+
+  state.gameOver = true;
+  state.endingType =
+    state.verdictOutlook === "undetermined" ? "wrongful" : (state.verdictOutlook as EndingType);
+  state.endingNarrative = buildEndingNarrative(state);
+  events.push("game_over");
+};
+
+const buildEndingNarrative = (state: GameState): string => {
+  const loop = state.rebirth.loop;
+  const isFirstLoop = loop <= 1;
+
+  switch (state.endingType) {
+    case "truth":
+      if (isFirstLoop) {
+        return [
+          "判决撤销，重新认定无罪。",
+          "",
+          "林策在走廊里停了很久，不知道该往哪儿走——他以为今天要死。我把案卷合上，手心的汗是冷的。没有人知道这不是第一次，没有人知道我为什么从第一天就确定他没有杀人。",
+          "",
+          "真相不总是赢，但这一次，它赢了。"
+        ].join("\n");
+      }
+      return [
+        `第 ${loop} 周目，终于走到了这里。`,
+        "",
+        ""无罪。"",
+        "",
+        "我站在走廊里，听着法庭里人声逐渐散去。比上一次快了许多——因为我知道哪条路走不通。林策还是那个林策，只有我知道他差点被一份伪造的时间线永远定义。",
+        "",
+        "这一次，我让证据替真相开口了。"
+      ].join("\n");
+
+    case "wrongful":
+      if (isFirstLoop) {
+        return [
+          "锤声落下。"有罪。"",
+          "",
+          "我站在走廊里，听着审判结束后的脚步声逐渐远去。证据链没有合拢，关键的那一节我没能补上。",
+          "",
+          "林策会被送进去。我必须再试一次。"
+        ].join("\n");
+      }
+      return [
+        `第 ${loop} 周目，又输了。`,
+        "",
+        "比上一次输得更难看——命运阻力每一次都比上一次更重。我攥着案卷，盯着那一页没能及时质疑的法医意见，记住这一次失败的具体位置。",
+        "",
+        "还有机会。"
+      ].join("\n");
+
+    case "misled":
+      return [
+        "伪证最终被采信。",
+        "",
+        "真正的作案者坐在旁听席第三排，面无表情。我本可以更早质疑那份鉴定报告——但我没有，或者质疑得太迟了。",
+        "",
+        "林策被冤枉，不是因为真相隐藏得太深，而是因为我被一个精心设计的谎言带偏了方向。"
+      ].join("\n");
+
+    case "interference":
+      return [
+        "舆情彻底崩掉的那一刻，这场审判就不再是司法程序了。",
+        "",
+        "判决书是一份交易的收据。我知道谁在背后施压，但法庭上没有人敢承认这一点。",
+        "",
+        "真相没有死，它只是被压住了。这个案子，迟早会重新出现在某个人的案头。"
+      ].join("\n");
+
+    default:
+      return "案件已终局。";
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const outlookText = (outlook: GameState["verdictOutlook"]): string => {
   switch (outlook) {
