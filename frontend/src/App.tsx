@@ -216,7 +216,10 @@ function App() {
       try {
         const res = await fetch(`${API_BASE}/sessions/${savedId}/state`);
         if (!res.ok) {
-          localStorage.removeItem(STORAGE_KEY);
+          // 只有 404（会话确实不存在）才清除，其他错误（后端未就绪等）保留 sessionId
+          if (res.status === 404) {
+            localStorage.removeItem(STORAGE_KEY);
+          }
           return;
         }
         const state = (await res.json()) as GameStateResponse;
@@ -227,6 +230,7 @@ function App() {
         sessionIdRef.current = savedId;
         setSessionId(savedId);
         setInitialized(true);
+        setName(state.player?.name ?? "沈言");
         setStoryFeed(["[已自动恢复上次会话进度]", state.currentNarrative]);
         setChoices(state.currentChoices);
         setProgress(state.progress);
@@ -244,7 +248,7 @@ function App() {
         }
         setStatus("已自动恢复上次会话进度");
       } catch {
-        localStorage.removeItem(STORAGE_KEY);
+        // 网络错误（后端未启动等），不清除 localStorage，下次刷新还能重试
       }
     };
 

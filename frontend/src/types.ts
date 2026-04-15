@@ -103,6 +103,7 @@ export type EndingType = "truth" | "wrongful" | "misled" | "interference";
 
 export type GameStateResponse = {
   initialized: boolean;
+  player: { name: string; role: string; talent: string; starterItem: string };
   currentNarrative: string;
   currentChoices: Choice[];
   progress: Progress;

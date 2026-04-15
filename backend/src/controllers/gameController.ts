@@ -88,7 +88,17 @@ export const createGameController = (gameService: GameService) => {
       }
       res.end();
     } catch (error) {
-      next(error);
+      // If SSE headers haven't been sent yet, use standard error handler
+      if (!res.headersSent) {
+        next(error);
+        return;
+      }
+      // If SSE is already streaming, send error as SSE event
+      const message = error instanceof AppError
+        ? error.message
+        : "AI 服务异常，请重试。";
+      sendSseEvent(res, "error", { message, retryable: true });
+      res.end();
     }
   };
 

@@ -1,11 +1,11 @@
 import { MongoClient } from "mongodb";
 import type { GameRepository } from "../repositories/gameRepository.js";
-import { InMemoryGameRepository } from "../repositories/memory/inMemoryGameRepository.js";
+import { FileGameRepository } from "../repositories/file/fileGameRepository.js";
 import { MongoGameRepository } from "../repositories/mongodb/mongoGameRepository.js";
 
 export type RepositoryContext = {
   repository: GameRepository;
-  mode: "memory" | "mongodb";
+  mode: "file" | "mongodb";
   close: () => Promise<void>;
 };
 
@@ -16,8 +16,8 @@ export const createRepositoryContext = async (): Promise<RepositoryContext> => {
 
   if (!mongoUri) {
     return {
-      repository: new InMemoryGameRepository(),
-      mode: "memory",
+      repository: new FileGameRepository(),
+      mode: "file",
       close: async () => {
         return;
       }
@@ -44,10 +44,10 @@ export const createRepositoryContext = async (): Promise<RepositoryContext> => {
     }
 
     // eslint-disable-next-line no-console
-    console.warn("MongoDB connection failed, fallback to in-memory repository.", error);
+    console.warn("MongoDB connection failed, fallback to file repository.", error);
     return {
-      repository: new InMemoryGameRepository(),
-      mode: "memory",
+      repository: new FileGameRepository(),
+      mode: "file",
       close: async () => {
         return;
       }
