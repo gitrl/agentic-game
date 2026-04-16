@@ -73,6 +73,9 @@ export class GameService {
     state.turn += 1;
     state.progress = deriveProgress(state.turn);
 
+    // 记录玩家经历过的最高章节（防止存档恢复时真相层级跳跃）
+    state.maxRevealedChapter = Math.max(state.maxRevealedChapter ?? 1, state.progress.chapter);
+
     // Write memory file BEFORE LLM call so it can read the latest context
     await writeMemoryFile(state);
 

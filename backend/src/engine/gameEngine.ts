@@ -110,7 +110,8 @@ export const createEmptyState = (sessionId: string): GameState => ({
   gameOver: false,
   endingType: null,
   endingNarrative: "",
-  lastChoiceId: ""
+  lastChoiceId: "",
+  maxRevealedChapter: 1
 });
 
 export const initializeGame = (

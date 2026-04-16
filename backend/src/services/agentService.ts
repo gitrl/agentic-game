@@ -45,6 +45,22 @@ export class AgentService {
     state: GameState,
     playerAction: { choiceId?: string; userInput?: string }
   ): Promise<AgentTurnResult> {
+    // 解析/验证失败时自动重试 1 次
+    try {
+      return await this.executeAgentLoop(state, playerAction);
+    } catch (error) {
+      const code = error instanceof AppError ? error.code : "";
+      const retryable = ["LLM_NO_NARRATIVE", "LLM_INVALID_NARRATIVE", "LLM_MISSING_TOOL"].includes(code);
+      if (!retryable) throw error;
+      console.warn(`[AgentService] ${code}，自动重试 1 次...`);
+      return await this.executeAgentLoop(state, playerAction);
+    }
+  }
+
+  private async executeAgentLoop(
+    state: GameState,
+    playerAction: { choiceId?: string; userInput?: string }
+  ): Promise<AgentTurnResult> {
     const memoryContext = await readMemoryFile(state.sessionId);
     const userMessage = this.buildUserContext(state, playerAction, memoryContext);
 
@@ -184,10 +200,10 @@ export class AgentService {
       recentHistory: recentSummaries.length > 0
         ? recentSummaries.map((s, i) => `[轮${nextTurn - recentSummaries.length + i}] ${s}`).join("\n")
         : "(暂无历史)",
-      memoryContext: memoryContext || "(暂无记忆记录)",
+      memoryContext: truncateContext(memoryContext, 3000) || "(暂无记忆记录)",
       lastChoices: state.currentChoices,
       worldContext: WORLD_CONTEXT,
-      chapterScript: buildChapterContext(progress.chapter)
+      chapterScript: buildChapterContext(Math.max(state.maxRevealedChapter ?? 1, progress.chapter))
     };
   }
 
@@ -299,4 +315,14 @@ export class AgentService {
       throw new AppError(502, "AI 未调用 generate_choices 工具，请重试。", "LLM_MISSING_TOOL");
     }
   }
+}
+
+/** 截断文本到指定字符数上限，保留开头和结尾 */
+function truncateContext(text: string, maxChars: number): string {
+  if (!text || text.length <= maxChars) {
+    return text;
+  }
+  const headSize = Math.floor(maxChars * 0.7);
+  const tailSize = maxChars - headSize - 20;
+  return text.slice(0, headSize) + "\n\n...(中间内容已省略)...\n\n" + text.slice(-tailSize);
 }

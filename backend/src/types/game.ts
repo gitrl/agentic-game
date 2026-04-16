@@ -99,6 +99,8 @@ export type GameState = {
   endingType: EndingType | null;
   endingNarrative: string;
   lastChoiceId: string;
+  /** 玩家实际经历过的最高章节数（存档恢复时防止真相层级跳跃） */
+  maxRevealedChapter: number;
 };
 
 export type InitPayload = {

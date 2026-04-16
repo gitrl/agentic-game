@@ -156,12 +156,14 @@ export const CHAPTER_SCRIPTS: ChapterScript[] = [
 export function buildChapterContext(chapter: number): string {
   const clampedChapter = Math.min(Math.max(chapter, 1), 5);
 
-  // 累积真相：当前章节及之前所有层级
+  // 真相注入策略：只注入当前层 + 前一层摘要，避免后期 token 膨胀
   const truthParts: string[] = [];
-  for (let i = 1; i <= clampedChapter; i++) {
-    if (TRUTH_LAYERS[i]) {
-      truthParts.push(TRUTH_LAYERS[i]);
-    }
+  if (clampedChapter >= 3 && TRUTH_LAYERS[clampedChapter - 1]) {
+    // 前一层作为简短背景回顾
+    truthParts.push("（前置真相回顾）" + TRUTH_LAYERS[clampedChapter - 1].split("\n")[1]);
+  }
+  if (TRUTH_LAYERS[clampedChapter]) {
+    truthParts.push(TRUTH_LAYERS[clampedChapter]);
   }
 
   // 当前章节剧本
