@@ -1,0 +1,170 @@
+{
+  "saveId": "4e30312d-5a64-4b7e-a60f-5df4570bf192",
+  "sessionId": "14fa22d3-46da-4f2f-ad5c-064ea1a58799",
+  "state": {
+    "sessionId": "14fa22d3-46da-4f2f-ad5c-064ea1a58799",
+    "initialized": true,
+    "turn": 2,
+    "progress": {
+      "chapter": 1,
+      "chapterTitle": "回溯醒来",
+      "sceneInChapter": 3,
+      "maxScenesInChapter": 8
+    },
+    "player": {
+      "name": "沈言",
+      "role": "辩护律师",
+      "talent": "交叉质证",
+      "starterItem": "案卷标注笔"
+    },
+    "stats": {
+      "truthScore": 49,
+      "judgeTrust": 53,
+      "juryBias": 0,
+      "publicPressure": 41,
+      "evidenceIntegrity": 53
+    },
+    "flags": {
+      "keyWitnessFlipped": false,
+      "forgedEvidenceAdmitted": false,
+      "interferenceDetected": false
+    },
+    "evidencePool": [
+      {
+        "id": "ev-river-cam-raw",
+        "title": "江堤监控原始码流",
+        "source": "市政天网备份磁带",
+        "reliability": 56,
+        "status": "verified",
+        "note": "已申请第三方技术鉴定，等待帧序列分析报告"
+      },
+      {
+        "id": "ev-emergency-call",
+        "title": "120 接警与调度录音",
+        "source": "急救中心调度台",
+        "reliability": 52,
+        "status": "unverified",
+        "note": "首通报警时间与警方到场记录存在 7 分钟错位"
+      },
+      {
+        "id": "ev-forensic-opinion",
+        "title": "首轮法医鉴定意见",
+        "source": "司法鉴定所",
+        "reliability": 44,
+        "status": "challenged",
+        "note": "死亡时刻区间过宽，且关键体征推断缺乏原始样本附录"
+      }
+    ],
+    "npcRelations": {
+      "chiefProsecutor": {
+        "trust": 29,
+        "stance": "hostile"
+      },
+      "presidingJudge": {
+        "trust": 52,
+        "stance": "neutral"
+      },
+      "keyWitness": {
+        "trust": 35,
+        "stance": "neutral"
+      },
+      "investigatorXu": {
+        "trust": 55,
+        "stance": "ally"
+      }
+    },
+    "verdictOutlook": "undetermined",
+    "currentNarrative": "我起身向法庭提交监控鉴定申请书，指尖在纸张边缘停顿半秒——这份熟悉感来自上一世，但我不能让任何人察觉。法官接过文件扫视条款，微微颔首准予程序。检方席传来轻微的纸张翻动声，首席检察官抬头看我，眼神里多了几分警惕。江堤监控的 43 秒黑屏终于要接受第三方技术解剖，那跳变的帧序列里藏着什么，很快会有答案。我坐回辩护席，案卷标注笔在指间转了一圈，等待鉴定期间的空档需要好好利用。",
+    "currentChoices": [
+      {
+        "id": "interview_investigator_xu",
+        "title": "约谈调查员老徐",
+        "description": "向警方调查员了解监控调取过程的细节",
+        "impactHint": "可能发现程序漏洞"
+      },
+      {
+        "id": "prepare_cross_exam",
+        "title": "准备交叉质证提纲",
+        "description": "针对监控黑屏时段设计质询问题链",
+        "impactHint": "提升质证效率"
+      },
+      {
+        "id": "request_witness_list",
+        "title": "申请证人名单补充",
+        "description": "要求检方提供案发当晚在场人员完整名单",
+        "impactHint": "扩大调查范围"
+      }
+    ],
+    "historySummaries": [
+      "序章：我回到冤案宣判前，案件进入实质审理阶段。",
+      "重建案发时间线，梳理三项证据间的矛盾点，获得法官初步认可",
+      "申请监控鉴定获法官准予，检方态度转冷，证据进入技术鉴定流程"
+    ],
+    "memory": {
+      "shortWindow": [
+        "第1章《回溯醒来》第1/8幕。\n我是沈言，以辩护律师身份走进青禾中院第一庭，把案卷标注笔压在案卷边缘。\n【案件名称】青禾江堤坠亡案\n【被告身份】林策，27岁，网约车司机；上一世被以“故意杀人”判处死刑。\n【死者身份】梁蔚，市重点项目审计员，案发前一周刚提交一份牵涉多方利益的审计复核意见。\n【检方核心主张】林策在 23:34 于江堤冲突中将梁蔚推落护栏，随后伪造报警时间并清理车内痕迹。\n【我记忆中的真相】真正作案者并非林策，但我不能直接说出“我来自未来”。\n【当前异常点】监控黑屏 43 秒、120 接警时间错位 7 分钟、首轮法医鉴定缺失原始样本附录。\n【规则约束】任何超前信息都会被认定为诱导证词，我只能让证据先开口。\n【重生参数】循环次数 1，记忆保留 60%，命运阻力 72。\n【本局目标】依靠“交叉质证”推进证据链与程序战，在终审前扭转冤案判决。",
+        "我将三份证据摊开在辩护席上，用案卷标注笔在时间轴上画出三条平行线。监控黑屏的 43 秒、接警错位的 7 分钟、法医鉴定的模糊区间——它们像三颗错位的齿轮，无法咬合成检方描述的完整图景。我注意到江堤监控跳变的帧序列与上一世记忆中某个细节重合，但不能让这份熟悉感流露在表情里。法官翻看着我整理的时间线对照表，微微颔首。检方席传来纸张翻动的声音，他们在计算我这套重组逻辑的破绽。",
+        "我起身向法庭提交监控鉴定申请书，指尖在纸张边缘停顿半秒——这份熟悉感来自上一世，但我不能让任何人察觉。法官接过文件扫视条款，微微颔首准予程序。检方席传来轻微的纸张翻动声，首席检察官抬头看我，眼神里多了几分警惕。江堤监控的 43 秒黑屏终于要接受第三方技术解剖，那跳变的帧序列里藏着什么，很快会有答案。我坐回辩护席，案卷标注笔在指间转了一圈，等待鉴定期间的空档需要好好利用。"
+      ],
+      "midSummary": [
+        "前置背景建立完成：我掌握真相但必须隐藏重生信息。"
+      ],
+      "longAnchors": [
+        "核心目标：不暴露重生记忆，靠证据链改写判决结果"
+      ]
+    },
+    "rebirth": {
+      "loop": 1,
+      "memoryRetention": 0.6,
+      "knownTruths": [
+        "林策并非直接致死者"
+      ],
+      "fate": 70
+    },
+    "replay": [
+      {
+        "turn": 1,
+        "playerAction": "timeline_rebuild",
+        "narrativeSummary": "重建案发时间线，梳理三项证据间的矛盾点，获得法官初步认可",
+        "statChanges": [
+          "truth_score +2",
+          "judge_trust +1",
+          "evidence_integrity +3",
+          "fate -1"
+        ],
+        "events": [],
+        "tokenUsage": {
+          "inputTokens": 8935,
+          "cachedInputTokens": 0,
+          "outputTokens": 906
+        },
+        "timestamp": "2026-04-16T08:04:49.791Z"
+      },
+      {
+        "turn": 2,
+        "playerAction": "request_cam_analysis",
+        "narrativeSummary": "申请监控鉴定获法官准予，检方态度转冷，证据进入技术鉴定流程",
+        "statChanges": [
+          "truth_score +1",
+          "judge_trust +2",
+          "public_pressure -1",
+          "evidence_integrity +2",
+          "fate -1",
+          "evidence_status: unverified -> verified"
+        ],
+        "events": [],
+        "tokenUsage": {
+          "inputTokens": 9467,
+          "cachedInputTokens": 0,
+          "outputTokens": 1050
+        },
+        "timestamp": "2026-04-16T08:05:45.575Z"
+      }
+    ],
+    "gameOver": false,
+    "endingType": null,
+    "endingNarrative": "",
+    "lastChoiceId": ""
+  },
+  "createdAt": "2026-04-16T08:06:29.712Z"
+}

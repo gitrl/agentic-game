@@ -43,14 +43,14 @@ const DEFAULT_ROLE = "辩护律师";
 const DEFAULT_TALENT = "交叉质证";
 const DEFAULT_STARTER_ITEM = "案卷标注笔";
 const CASE_BRIEF = [
-  "【案件名称】青禾江堤坠亡案",
-  "【时间节点】我重生回冤案宣判前 21 天，上一世的错误判决尚未发生。",
-  "【被告】林策，27 岁网约车司机；上一世被判故意杀人并执行死刑。",
-  "【死者】梁蔚，市重点项目审计员，死前掌握多方利益链条关键资料。",
-  "【检方观点】案发当晚林策与梁蔚发生争执，将其推落江堤后伪造报警时间。",
-  "【已知疑点】监控黑屏 43 秒、120 接警时间与警方记录错位 7 分钟、法医鉴定链条存在缺口。",
-  "【重生限制】我知道真相，但不能直接说；一旦暴露“先验记忆”，证词会被认定为诱导。",
-  "【任务目标】我只能通过证据链、程序异议与交叉质证，实质改变最终判决。"
+  { label: "案件名称", text: "青禾江堤坠亡案" },
+  { label: "被告", text: "林策，27 岁，网约车司机。检方以故意杀人罪提起公诉。" },
+  { label: "死者", text: "梁蔚，31 岁，青禾市审计局重点项目审计员。" },
+  { label: "检方主张", text: "案发当晚 23:34，林策于江堤与梁蔚发生冲突，将其推落护栏，随后伪造报警时间并清理车内痕迹。" },
+  { label: "案卷异常", text: "江堤监控在关键时段出现 43 秒黑屏；120 接警记录与手机通话时间存在 7 分钟错位；首轮法医鉴定意见缺失原始样本附录。" },
+  { label: "你的直觉", text: "上一世的判决是错的。你说不清哪里不对，但总觉得有些关键的东西被忽略了——或者被刻意隐藏了。" },
+  { label: "规则约束", text: "你不能直接说出自己的先验记忆，任何没有证据支撑的超前信息都会被认定为诱导证词。" },
+  { label: "任务目标", text: "通过证据链、程序异议与交叉质证，在终审前为林策争取公正判决。" }
 ];
 
 type VerdictOutlook = "truth" | "wrongful" | "misled" | "interference" | "undetermined";
@@ -69,11 +69,11 @@ const defaultProgress: Progress = {
 };
 
 const defaultStats: Stats = {
-  truthScore: 46,
+  truthScore: 50,
   judgeTrust: 50,
   juryBias: 0,
-  publicPressure: 42,
-  evidenceIntegrity: 48
+  publicPressure: 40,
+  evidenceIntegrity: 50
 };
 
 const defaultFlags: Flags = {
@@ -86,7 +86,7 @@ const defaultRebirth: RebirthState = {
   loop: 1,
   memoryRetention: 0.6,
   knownTruths: [],
-  fate: 72
+  fate: 50
 };
 
 function App() {
@@ -343,7 +343,7 @@ function App() {
 
     const activeSessionId = sessionIdRef.current || sessionId;
     if (!activeSessionId) {
-      setStatus("会话丢失，请点击“重开案件”后重试");
+      setStatus("会话丢失，请点击'重开案件'后重试");
       return;
     }
 
@@ -645,48 +645,6 @@ function App() {
         <section className="grid grid-cols-12 gap-5">
           <div className="col-span-8 grid gap-5">
             <Card className="tech-panel border-cyan-300/25 bg-slate-950/60">
-              <CardHeader className="space-y-2">
-                <CardTitle className="flex items-center gap-2 text-lg text-slate-100">
-                  <Scale className="h-5 w-5 text-cyan-300" />
-                  案情导入
-                </CardTitle>
-                <CardDescription className="text-slate-400">重生法庭悬疑模拟：我知道真相，但必须让证据先于记忆发声。</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-2">
-                  {CASE_BRIEF.map((line) => (
-                    <p key={line} className="rounded-md border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm leading-relaxed text-slate-200">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-[0.16em] text-slate-400">玩家代号</label>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={busy}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-500"
-                    />
-                  </div>
-
-                  <Button
-                    className="h-10 self-end bg-cyan-500 text-slate-950 hover:bg-cyan-400"
-                    onClick={handleInit}
-                    disabled={busy}
-                  >
-                    <BrainCircuit className="h-4 w-4" />
-                    {initialized ? "重开案件" : "进入庭审"}
-                  </Button>
-                </div>
-
-                <p className="text-xs text-slate-500">系统默认：{DEFAULT_ROLE} · 专长：{DEFAULT_TALENT}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="tech-panel border-cyan-300/25 bg-slate-950/60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg text-slate-100">
                   <BookOpenText className="h-5 w-5 text-cyan-300" />
@@ -698,7 +656,7 @@ function App() {
                 <div className="story-scroll max-h-[470px] space-y-3 overflow-y-auto pr-1">
                   {!initialized ? (
                     <article className="story-card border-dashed border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
-                      点击“进入庭审”后，这里会开始输出案件叙事与法庭攻防过程。
+                      点击"进入庭审"后，这里会开始输出案件叙事与法庭攻防过程。
                     </article>
                   ) : null}
 
@@ -769,12 +727,15 @@ function App() {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className={cn(
+                  "grid gap-3",
+                  choices.length <= 3 ? "grid-cols-3" : choices.length === 4 ? "grid-cols-2" : "grid-cols-3"
+                )}>
                   {choices.map((choice) => (
                     <button
                       key={choice.id}
                       className={cn(
-                        "group relative min-h-[178px] overflow-hidden rounded-lg border border-cyan-300/20 bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-left transition",
+                        "group relative min-h-[150px] overflow-hidden rounded-lg border border-cyan-300/20 bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-left transition",
                         "hover:-translate-y-0.5 hover:border-cyan-300/45 hover:shadow-[0_8px_28px_rgba(34,211,238,0.18)]",
                         "disabled:cursor-not-allowed disabled:opacity-50"
                       )}
@@ -945,6 +906,61 @@ function App() {
           </aside>
         </section>
       </div>
+
+      {/* 案情导入弹窗 —— 未初始化时全屏展示 */}
+      {!initialized ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/95 backdrop-blur-md">
+          <Card className="tech-panel w-full max-w-2xl border border-cyan-300/30 bg-slate-900/95 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
+            <CardHeader className="space-y-3 pb-2">
+              <p className="tracking-[0.32em] text-xs font-semibold uppercase text-cyan-300/80">Rebirth Legal Suspense</p>
+              <CardTitle className="text-3xl font-semibold tracking-wide text-slate-50">
+                <Scale className="mb-1 mr-2 inline-block h-7 w-7 text-cyan-300" />
+                逆判：重生证词
+              </CardTitle>
+              <CardDescription className="text-sm text-slate-400">
+                上一世的判决是错的。这一次，让证据先于记忆发声。
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-2">
+                {CASE_BRIEF.map((item) => (
+                  <div key={item.label} className="rounded-md border border-slate-700/70 bg-slate-800/60 px-4 py-2.5">
+                    <span className="mr-2 text-xs font-semibold text-cyan-300">{item.label}</span>
+                    <span className="text-sm leading-relaxed text-slate-200">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Separator className="bg-slate-700/50" />
+
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-[0.16em] text-slate-400">辩护律师代号</label>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={busy}
+                    placeholder="输入你的姓名"
+                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-500"
+                  />
+                </div>
+                <Button
+                  className="h-10 bg-cyan-500 px-6 text-slate-950 hover:bg-cyan-400"
+                  onClick={handleInit}
+                  disabled={busy}
+                >
+                  <BrainCircuit className="mr-1 h-4 w-4" />
+                  {busy ? "建立庭审中..." : "重开案件"}
+                </Button>
+              </div>
+
+              <p className="text-center text-xs text-slate-500">
+                系统默认角色：{DEFAULT_ROLE} / 专长：{DEFAULT_TALENT} / 初始道具：{DEFAULT_STARTER_ITEM}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
       {/* P1：结局画面覆盖层 */}
       {gameOver ? (

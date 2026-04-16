@@ -86,7 +86,7 @@ export const TOOL_DEFINITIONS: Tool[] = [
     function: {
       name: "generate_choices",
       description:
-        "为玩家生成 3 个当前回合可用的策略选项。选项应基于当前剧情阶段和状态，不可重复上一轮的选项。每轮必须调用一次。",
+        "为玩家生成 3-5 个当前回合可用的策略选项。选项应基于当前剧情阶段和状态，不可重复上一轮的选项。每轮必须调用一次。",
       parameters: {
         type: "object",
         properties: {
@@ -115,7 +115,7 @@ export const TOOL_DEFINITIONS: Tool[] = [
               required: ["id", "title", "description", "impactHint"]
             },
             minItems: 3,
-            maxItems: 3
+            maxItems: 5
           }
         },
         required: ["choices"]

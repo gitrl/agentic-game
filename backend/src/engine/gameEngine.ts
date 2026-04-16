@@ -20,11 +20,11 @@ const clamp = (value: number, min: number, max: number): number => {
 };
 
 const buildDefaultStats = (): Stats => ({
-  truthScore: 46,
+  truthScore: 50,
   judgeTrust: 50,
   juryBias: 0,
-  publicPressure: 42,
-  evidenceIntegrity: 48
+  publicPressure: 40,
+  evidenceIntegrity: 50
 });
 
 const buildDefaultFlags = (): Flags => ({
@@ -43,8 +43,8 @@ const buildDefaultRelations = (): Record<string, NpcRelation> => ({
 const buildDefaultRebirthState = (): RebirthState => ({
   loop: 1,
   memoryRetention: 0.6,
-  knownTruths: ["林策并非直接致死者"],
-  fate: 72
+  knownTruths: ["上一世的判决是错的"],
+  fate: 50
 });
 
 const buildInitialEvidence = (): EvidenceItem[] => {
@@ -146,17 +146,17 @@ export const initializeGame = (
   const prologue = [
     `第${state.progress.chapter}章《${state.progress.chapterTitle}》第${state.progress.sceneInChapter}/${state.progress.maxScenesInChapter}幕。`,
     `我是${state.player.name}，以${state.player.role}身份走进${COURTROOM_LOCALES[0]}，把${state.player.starterItem}压在案卷边缘。`,
-    "【案件名称】青禾江堤坠亡案",
-    "【被告身份】林策，27岁，网约车司机；上一世被以“故意杀人”判处死刑。",
-    "【死者身份】梁蔚，市重点项目审计员，案发前一周刚提交一份牵涉多方利益的审计复核意见。",
-    "【检方核心主张】林策在 23:34 于江堤冲突中将梁蔚推落护栏，随后伪造报警时间并清理车内痕迹。",
-    "【我记忆中的真相】真正作案者并非林策，但我不能直接说出“我来自未来”。",
-    "【当前异常点】监控黑屏 43 秒、120 接警时间错位 7 分钟、首轮法医鉴定缺失原始样本附录。",
-    "【规则约束】任何超前信息都会被认定为诱导证词，我只能让证据先开口。",
+    `【案件名称】青禾江堤坠亡案`,
+    `【被告身份】林策，27岁，网约车司机；检方以故意杀人罪提起公诉。`,
+    `【死者身份】梁蔚，31岁，青禾市审计局重点项目审计员。`,
+    `【检方核心主张】林策于 23:34 在江堤与梁蔚发生冲突，将其推落护栏，随后伪造报警时间并清理车内痕迹。`,
+    `【我的直觉】上一世的判决是错的。我说不清哪里不对，但总觉得有些关键的东西被忽略了——或者被刻意隐藏了。`,
+    `【案卷中的异常】监控在 23:34 出现 43 秒黑屏，120 接警记录与手机通话时间错位 7 分钟，首轮法医鉴定意见缺失原始样本附录。`,
+    `【规则约束】我不能直接说出"我知道结局"，任何没有证据支撑的超前信息都会被认定为诱导证词。`,
     `【重生参数】循环次数 ${state.rebirth.loop}，记忆保留 ${Math.round(
       state.rebirth.memoryRetention * 100
     )}%，命运阻力 ${state.rebirth.fate}。`,
-    `【本局目标】依靠“${state.player.talent}”推进证据链与程序战，在终审前扭转冤案判决。`
+    `【本局目标】依靠'${state.player.talent}'寻找真相，在终审前为林策争取公正判决。`
   ].join("\n");
 
   state.currentNarrative = prologue;
@@ -165,11 +165,11 @@ export const initializeGame = (
   state.endingNarrative = "";
   state.lastChoiceId = "";
   state.currentChoices = buildChoices(state.turn, state.stats, state.flags, [], "");
-  state.historySummaries = ["序章：我回到冤案宣判前，案件进入实质审理阶段。"];
+  state.historySummaries = ["序章：案件进入实质审理，案卷中存在多处异常。"];
   state.memory = {
     shortWindow: [prologue],
-    midSummary: ["前置背景建立完成：我掌握真相但必须隐藏重生信息。"],
-    longAnchors: ["核心目标：不暴露重生记忆，靠证据链改写判决结果"]
+    midSummary: ["前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。"],
+    longAnchors: ["上一世的判决是错的，但我无法直接说出理由"]
   };
   state.replay = [];
 
@@ -239,7 +239,7 @@ const buildChoices = (
     {
       id: "media_guidance",
       title: "发布庭审澄清纪要",
-      description: "公开已核验事实，抑制“被告已定罪”的先入叙事",
+      description: "公开已核验事实，抑制'被告已定罪'的先入叙事",
       impactHint: "影响公众压力与陪审偏置"
     }
   ];
@@ -274,8 +274,9 @@ const buildChoices = (
 
   const picks = [
     base[offset],
-    base[(offset + 2) % base.length],
-    base[(offset + 4) % base.length]
+    base[(offset + 1) % base.length],
+    base[(offset + 3) % base.length],
+    base[(offset + 5) % base.length]
   ];
 
   return dedupeChoices(picks);
@@ -299,7 +300,7 @@ export const maybeTriggerRebirth = (state: GameState, events: string[], statChan
     state.verdictOutlook === "misled" ||
     state.verdictOutlook === "interference";
   const fateOverflow = state.rebirth.fate >= 88;
-  const shouldRebirth = state.turn >= 6 && doomedOutlook && fateOverflow;
+  const shouldRebirth = state.turn >= 12 && doomedOutlook && fateOverflow;
 
   if (!shouldRebirth) {
     return;
@@ -314,11 +315,11 @@ export const maybeTriggerRebirth = (state: GameState, events: string[], statChan
   state.rebirth.knownTruths = state.rebirth.knownTruths.slice(-keepCount);
   state.rebirth.fate = clamp(state.rebirth.fate - 24, 30, 100);
 
-  state.stats.truthScore = clamp(Math.round((state.stats.truthScore + 42) / 2), 28, 72);
-  state.stats.judgeTrust = clamp(Math.round((state.stats.judgeTrust + 48) / 2), 30, 74);
+  state.stats.truthScore = clamp(Math.round((state.stats.truthScore + 50) / 2), 30, 72);
+  state.stats.judgeTrust = clamp(Math.round((state.stats.judgeTrust + 50) / 2), 30, 74);
   state.stats.juryBias = clamp(Math.round(state.stats.juryBias * 0.35), -60, 60);
-  state.stats.publicPressure = clamp(Math.round((state.stats.publicPressure + 38) / 2), 20, 82);
-  state.stats.evidenceIntegrity = clamp(Math.round((state.stats.evidenceIntegrity + 45) / 2), 30, 76);
+  state.stats.publicPressure = clamp(Math.round((state.stats.publicPressure + 40) / 2), 20, 82);
+  state.stats.evidenceIntegrity = clamp(Math.round((state.stats.evidenceIntegrity + 50) / 2), 30, 76);
 
   state.flags.forgedEvidenceAdmitted = false;
   state.flags.interferenceDetected = false;
@@ -346,7 +347,7 @@ export const evaluateVerdictOutlook = (state: GameState): GameState["verdictOutl
   if (flags.forgedEvidenceAdmitted || (stats.truthScore < 60 && stats.juryBias > 18)) {
     return "misled";
   }
-  if (stats.truthScore <= 45 || stats.evidenceIntegrity <= 40 || stats.judgeTrust <= 35) {
+  if (stats.truthScore <= 35 || stats.evidenceIntegrity <= 32 || stats.judgeTrust <= 28) {
     return "wrongful";
   }
   return "undetermined";
@@ -372,6 +373,104 @@ export const updateMemoryBundles = (state: GameState, narrative: string, summary
   }
 
   state.memory.longAnchors = state.memory.longAnchors.slice(-8);
+};
+
+// ─── 里程碑事件 + NPC 联动 ─────────────────────────────────────────────────
+
+export const applyMilestones = (state: GameState, events: string[]): void => {
+  const { turn, stats, flags, evidencePool, npcRelations, rebirth } = state;
+
+  // ── 里程碑 1：第 4 轮自动新增跨江收费站记录 ──
+  if (turn === 4 && !evidencePool.some((e) => e.id === "ev-toll-record")) {
+    evidencePool.push({
+      id: "ev-toll-record",
+      title: "跨江收费站过闸记录",
+      source: "市交通管理局调取",
+      reliability: 63,
+      status: "unverified",
+      note: "案发时段有一辆未注册车辆经过江堤附近出口"
+    });
+    events.push("milestone_new_evidence");
+  }
+
+  // ── 里程碑 2：第 7 轮后 + truthScore >= 62 → 证人反转 ──
+  if (
+    turn >= 7 &&
+    stats.truthScore >= 62 &&
+    !flags.keyWitnessFlipped &&
+    npcRelations.keyWitness &&
+    npcRelations.keyWitness.trust >= 45
+  ) {
+    flags.keyWitnessFlipped = true;
+    npcRelations.keyWitness.trust = clamp(npcRelations.keyWitness.trust + 12, 0, 100);
+    if (npcRelations.keyWitness.trust >= 62) {
+      npcRelations.keyWitness.stance = "ally";
+    }
+    events.push("milestone_witness_flip");
+
+    // NPC 联动：证人反转 → 检察官被动 → 审判长注意
+    if (npcRelations.chiefProsecutor) {
+      npcRelations.chiefProsecutor.trust = clamp(npcRelations.chiefProsecutor.trust - 4, 0, 100);
+      if (npcRelations.chiefProsecutor.trust <= 32) {
+        npcRelations.chiefProsecutor.stance = "hostile";
+      }
+    }
+    if (npcRelations.presidingJudge) {
+      npcRelations.presidingJudge.trust = clamp(npcRelations.presidingJudge.trust + 3, 0, 100);
+    }
+
+    // 写入已知真相
+    if (!rebirth.knownTruths.includes("关键证人的原始口供存在误导")) {
+      rebirth.knownTruths.push("关键证人的原始口供存在误导");
+      rebirth.knownTruths = rebirth.knownTruths.slice(-8);
+    }
+  }
+
+  // ── 里程碑 3：第 10 轮后 + evidenceIntegrity <= 42 → 伪证被采纳 ──
+  if (turn >= 10 && stats.evidenceIntegrity <= 42 && !flags.forgedEvidenceAdmitted) {
+    flags.forgedEvidenceAdmitted = true;
+    events.push("milestone_forged_evidence");
+
+    // NPC 联动：伪证被采纳 → 审判长失望 → 调查员警觉
+    if (npcRelations.presidingJudge) {
+      npcRelations.presidingJudge.trust = clamp(npcRelations.presidingJudge.trust - 5, 0, 100);
+      if (npcRelations.presidingJudge.trust <= 32) {
+        npcRelations.presidingJudge.stance = "hostile";
+      } else if (npcRelations.presidingJudge.trust < 62) {
+        npcRelations.presidingJudge.stance = "neutral";
+      }
+    }
+    if (npcRelations.investigatorXu) {
+      npcRelations.investigatorXu.trust = clamp(npcRelations.investigatorXu.trust + 2, 0, 100);
+    }
+
+    if (!rebirth.knownTruths.includes("争议鉴定结果并非唯一解释")) {
+      rebirth.knownTruths.push("争议鉴定结果并非唯一解释");
+      rebirth.knownTruths = rebirth.knownTruths.slice(-8);
+    }
+  }
+
+  // ── 里程碑 4：第 16 轮后 + publicPressure >= 74 → 外部干预暴露 ──
+  if (turn >= 16 && stats.publicPressure >= 74 && !flags.interferenceDetected) {
+    flags.interferenceDetected = true;
+    events.push("milestone_interference");
+
+    // NPC 联动：外部干预暴露 → 调查员积极 → 检察官承压
+    if (npcRelations.investigatorXu) {
+      npcRelations.investigatorXu.trust = clamp(npcRelations.investigatorXu.trust + 4, 0, 100);
+      if (npcRelations.investigatorXu.trust >= 62) {
+        npcRelations.investigatorXu.stance = "ally";
+      }
+    }
+    if (npcRelations.chiefProsecutor) {
+      npcRelations.chiefProsecutor.trust = clamp(npcRelations.chiefProsecutor.trust - 3, 0, 100);
+    }
+
+    if (!rebirth.knownTruths.includes("案件存在场外力量干预")) {
+      rebirth.knownTruths.push("案件存在场外力量干预");
+      rebirth.knownTruths = rebirth.knownTruths.slice(-8);
+    }
+  }
 };
 
 // ─── 结局系统 ───────────────────────────────────────────────────────────────

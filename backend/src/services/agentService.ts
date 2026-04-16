@@ -8,6 +8,8 @@ import type {
 } from "../types/game.js";
 import { readLlmConfig, type LlmConfig } from "../config/llmConfig.js";
 import { AGENT_SYSTEM_PROMPT } from "../prompts/agentSystemPrompt.js";
+import { WORLD_CONTEXT } from "../prompts/worldContext.js";
+import { buildChapterContext } from "../prompts/chapterScripts.js";
 import { TOOL_DEFINITIONS } from "../tools/definitions.js";
 import { executeToolCall, type ToolCallRecord } from "../tools/executor.js";
 import { readMemoryFile } from "../utils/memoryFileWriter.js";
@@ -162,9 +164,15 @@ export class AgentService {
       };
     }
 
+    const nextTurn = state.turn + 1;
+    const progress = this.deriveProgress(nextTurn);
+
+    // 最近 3 轮摘要，提供短期叙事连贯性
+    const recentSummaries = state.historySummaries.slice(-3);
+
     return {
-      turn: state.turn + 1,
-      progress: this.deriveProgress(state.turn + 1),
+      turn: nextTurn,
+      progress,
       player: state.player,
       playerAction: actionDesc,
       stats: state.stats,
@@ -173,8 +181,13 @@ export class AgentService {
       npcRelations: state.npcRelations,
       verdictOutlook: state.verdictOutlook,
       rebirth: state.rebirth,
+      recentHistory: recentSummaries.length > 0
+        ? recentSummaries.map((s, i) => `[轮${nextTurn - recentSummaries.length + i}] ${s}`).join("\n")
+        : "(暂无历史)",
       memoryContext: memoryContext || "(暂无记忆记录)",
-      lastChoices: state.currentChoices
+      lastChoices: state.currentChoices,
+      worldContext: WORLD_CONTEXT,
+      chapterScript: buildChapterContext(progress.chapter)
     };
   }
 

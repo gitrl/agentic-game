@@ -2,6 +2,7 @@ import {
   createEmptyState,
   initializeGame,
   evaluateVerdictOutlook,
+  applyMilestones,
   maybeTriggerRebirth,
   checkGameOver,
   updateMemoryBundles,
@@ -85,6 +86,9 @@ export class GameService {
     // Post-processing: code-enforced game rules
     const events: string[] = [];
     const statChanges: string[] = [];
+
+    // Apply milestone events (code-enforced, not LLM-dependent)
+    applyMilestones(state, events);
 
     // Evaluate verdict outlook based on updated stats
     state.verdictOutlook = evaluateVerdictOutlook(state);
