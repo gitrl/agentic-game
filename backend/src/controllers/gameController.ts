@@ -36,20 +36,27 @@ export const createGameController = (gameService: GameService) => {
       return;
     }
 
+    setupSse(res);
+    if (typeof res.flushHeaders === "function") {
+      res.flushHeaders();
+    }
+
+    let closed = false;
+    res.on("close", () => {
+      closed = true;
+    });
+
+    sendSseEvent(res, "status", { message: "已接收行动，正在处理..." });
+
     try {
       const { result, inputFeedback } = await gameService.processTurn(sessionId, {
         choiceId,
         userInput
       });
-      setupSse(res);
-      if (typeof res.flushHeaders === "function") {
-        res.flushHeaders();
-      }
 
-      let closed = false;
-      res.on("close", () => {
-        closed = true;
-      });
+      if (closed) {
+        return;
+      }
 
       const chunks = splitNarrative(result.narrative, 34);
       sendSseEvent(res, "input_feedback", inputFeedback);
@@ -88,7 +95,7 @@ export const createGameController = (gameService: GameService) => {
       }
       res.end();
     } catch (error) {
-      // If SSE headers haven't been sent yet, use standard error handler
+      // 参数校验类错误可能在 setupSse 之前返回；其余错误走 SSE error 事件
       if (!res.headersSent) {
         next(error);
         return;

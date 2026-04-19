@@ -1,0 +1,134 @@
+{
+  "saveId": "479ae7cc-64bf-4e9c-b91e-26c8589cadf6",
+  "sessionId": "735e3a8d-f997-4cc9-b6b7-6fa6bcac63ff",
+  "state": {
+    "sessionId": "735e3a8d-f997-4cc9-b6b7-6fa6bcac63ff",
+    "initialized": true,
+    "turn": 0,
+    "progress": {
+      "chapter": 1,
+      "chapterTitle": "回溯醒来",
+      "sceneInChapter": 1,
+      "maxScenesInChapter": 8
+    },
+    "player": {
+      "name": "沈言",
+      "role": "辩护律师",
+      "talent": "交叉质证",
+      "starterItem": "案卷标注笔"
+    },
+    "stats": {
+      "truthScore": 50,
+      "judgeTrust": 50,
+      "juryBias": 0,
+      "publicPressure": 40,
+      "evidenceIntegrity": 50
+    },
+    "flags": {
+      "keyWitnessFlipped": false,
+      "forgedEvidenceAdmitted": false,
+      "interferenceDetected": false
+    },
+    "evidencePool": [
+      {
+        "id": "ev-river-cam-raw",
+        "title": "江堤监控原始码流",
+        "source": "市政天网备份磁带",
+        "reliability": 56,
+        "status": "unverified",
+        "note": "案发前 14 分钟出现 43 秒黑屏，帧序列存在跳变"
+      },
+      {
+        "id": "ev-emergency-call",
+        "title": "120 接警与调度录音",
+        "source": "急救中心调度台",
+        "reliability": 52,
+        "status": "unverified",
+        "note": "首通报警时间与警方到场记录存在 7 分钟错位"
+      },
+      {
+        "id": "ev-forensic-opinion",
+        "title": "首轮法医鉴定意见",
+        "source": "司法鉴定所",
+        "reliability": 44,
+        "status": "challenged",
+        "note": "死亡时刻区间过宽，且关键体征推断缺乏原始样本附录"
+      }
+    ],
+    "npcRelations": {
+      "chiefProsecutor": {
+        "trust": 30,
+        "stance": "hostile"
+      },
+      "presidingJudge": {
+        "trust": 50,
+        "stance": "neutral"
+      },
+      "keyWitness": {
+        "trust": 35,
+        "stance": "neutral"
+      },
+      "investigatorXu": {
+        "trust": 55,
+        "stance": "ally"
+      }
+    },
+    "verdictOutlook": "undetermined",
+    "currentNarrative": "第1章《回溯醒来》第1/8幕。\n我是沈言，以辩护律师身份走进青禾中院第一庭，把案卷标注笔压在案卷边缘。\n【案件名称】青禾江堤坠亡案\n【被告身份】林策，27岁，网约车司机；检方以故意杀人罪提起公诉。\n【死者身份】梁蔚，31岁，青禾市审计局重点项目审计员。\n【检方核心主张】林策于 23:34 在江堤与梁蔚发生冲突，将其推落护栏，随后伪造报警时间并清理车内痕迹。\n【我的直觉】上一世的判决是错的。我说不清哪里不对，但总觉得有些关键的东西被忽略了——或者被刻意隐藏了。\n【案卷中的异常】监控在 23:34 出现 43 秒黑屏，120 接警记录与手机通话时间错位 7 分钟，首轮法医鉴定意见缺失原始样本附录。\n【规则约束】我不能直接说出\"我知道结局\"，任何没有证据支撑的超前信息都会被认定为诱导证词。\n【重生参数】循环次数 1，记忆保留 60%，命运阻力 50。\n【本局目标】依靠'交叉质证'寻找真相，在终审前为林策争取公正判决。",
+    "currentChoices": [
+      {
+        "id": "examine_evidence",
+        "title": "补全证据链断点",
+        "description": "逐项核对证据来源、封存记录与调取流程，修复关键缺口",
+        "impactHint": "提升真相分与证据完整度"
+      },
+      {
+        "id": "cross_examine",
+        "title": "诱导式交叉质证",
+        "description": "不暴露先验信息，通过细节追问逼出证词矛盾",
+        "impactHint": "可能提升法官信任，也可能触发对抗"
+      },
+      {
+        "id": "file_motion",
+        "title": "提出程序排异申请",
+        "description": "申请排除瑕疵证据并要求检方补全原始链条",
+        "impactHint": "改变法庭态势与陪审倾向"
+      },
+      {
+        "id": "media_guidance",
+        "title": "发布庭审澄清纪要",
+        "description": "公开已核验事实，抑制'被告已定罪'的先入叙事",
+        "impactHint": "影响公众压力与陪审偏置"
+      }
+    ],
+    "historySummaries": [
+      "序章：案件进入实质审理，案卷中存在多处异常。"
+    ],
+    "memory": {
+      "shortWindow": [
+        "第1章《回溯醒来》第1/8幕。\n我是沈言，以辩护律师身份走进青禾中院第一庭，把案卷标注笔压在案卷边缘。\n【案件名称】青禾江堤坠亡案\n【被告身份】林策，27岁，网约车司机；检方以故意杀人罪提起公诉。\n【死者身份】梁蔚，31岁，青禾市审计局重点项目审计员。\n【检方核心主张】林策于 23:34 在江堤与梁蔚发生冲突，将其推落护栏，随后伪造报警时间并清理车内痕迹。\n【我的直觉】上一世的判决是错的。我说不清哪里不对，但总觉得有些关键的东西被忽略了——或者被刻意隐藏了。\n【案卷中的异常】监控在 23:34 出现 43 秒黑屏，120 接警记录与手机通话时间错位 7 分钟，首轮法医鉴定意见缺失原始样本附录。\n【规则约束】我不能直接说出\"我知道结局\"，任何没有证据支撑的超前信息都会被认定为诱导证词。\n【重生参数】循环次数 1，记忆保留 60%，命运阻力 50。\n【本局目标】依靠'交叉质证'寻找真相，在终审前为林策争取公正判决。"
+      ],
+      "midSummary": [
+        "前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。"
+      ],
+      "longAnchors": [
+        "上一世的判决是错的，但我无法直接说出理由"
+      ]
+    },
+    "rebirth": {
+      "loop": 1,
+      "memoryRetention": 0.6,
+      "knownTruths": [
+        "上一世的判决是错的"
+      ],
+      "fate": 50
+    },
+    "replay": [],
+    "gameOver": false,
+    "endingType": null,
+    "endingNarrative": "",
+    "lastChoiceId": "",
+    "maxRevealedChapter": 1
+  },
+  "createdAt": "2026-04-17T13:14:17.823Z"
+}

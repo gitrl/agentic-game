@@ -579,6 +579,8 @@ LlmNarrativeService.enhanceTurn()
 | `OPENAI_API_KEY` | 空 | API Key |
 | `OPENAI_MODEL` | `qwen3.5-plus` | 模型名 |
 | `OPENAI_TEMPERATURE` | `0.7` | 采样温度 |
+| `OPENAI_ENABLE_THINKING` | `true` | 是否开启推理模式 |
+| `OPENAI_THINKING_BUDGET` | `256` | 推理预算（建议：低 256，中 1024，高 2048） |
 | `OPENAI_TIMEOUT_MS` | `30000` | LLM 请求超时（毫秒） |
 | `LLM_SOFT_TIMEOUT_MS` | `4000` | 单次润色软超时 |
 | `LLM_MAX_CONSECUTIVE_FAILURES` | `2` | 连续失败熔断阈值 |

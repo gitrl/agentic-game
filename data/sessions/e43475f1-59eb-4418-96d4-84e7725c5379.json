@@ -1,0 +1,287 @@
+{
+  "sessionId": "e43475f1-59eb-4418-96d4-84e7725c5379",
+  "initialized": true,
+  "turn": 7,
+  "progress": {
+    "chapter": 1,
+    "chapterTitle": "回溯醒来",
+    "sceneInChapter": 8,
+    "maxScenesInChapter": 8
+  },
+  "player": {
+    "name": "沈言",
+    "role": "辩护律师",
+    "talent": "交叉质证",
+    "starterItem": "案卷标注笔"
+  },
+  "stats": {
+    "truthScore": 82,
+    "judgeTrust": 71,
+    "juryBias": -8,
+    "publicPressure": 43,
+    "evidenceIntegrity": 70
+  },
+  "flags": {
+    "keyWitnessFlipped": false,
+    "forgedEvidenceAdmitted": false,
+    "interferenceDetected": false
+  },
+  "evidencePool": [
+    {
+      "id": "ev-river-cam-raw",
+      "title": "江堤监控原始码流",
+      "source": "市政天网备份磁带",
+      "reliability": 64,
+      "status": "verified",
+      "note": "经当庭技术鉴定确认，黑屏时段存在人为剪辑痕迹，非设备故障"
+    },
+    {
+      "id": "ev-emergency-call",
+      "title": "120 接警与调度录音",
+      "source": "急救中心调度台",
+      "reliability": 60,
+      "status": "verified",
+      "note": "经当庭比对，确认120接警时间与被告人手机通话记录存在7分钟人为错位，非系统误差，证据可信度大幅提升"
+    },
+    {
+      "id": "ev-forensic-opinion",
+      "title": "首轮法医鉴定意见",
+      "source": "司法鉴定所",
+      "reliability": 36,
+      "status": "challenged",
+      "note": "死亡时刻区间过宽（23:30-23:50），且关键体征推断缺乏原始样本附录；经交叉质证后可信度大幅下降"
+    },
+    {
+      "id": "ev-toll-record",
+      "title": "跨江收费站过闸记录",
+      "source": "市交通管理局调取",
+      "reliability": 63,
+      "status": "unverified",
+      "note": "案发时段有一辆未注册车辆经过江堤附近出口"
+    }
+  ],
+  "npcRelations": {
+    "chiefProsecutor": {
+      "trust": 18,
+      "stance": "hostile"
+    },
+    "presidingJudge": {
+      "trust": 61,
+      "stance": "neutral"
+    },
+    "keyWitness": {
+      "trust": 29,
+      "stance": "hostile"
+    },
+    "investigatorXu": {
+      "trust": 55,
+      "stance": "ally"
+    }
+  },
+  "verdictOutlook": "undetermined",
+  "currentNarrative": "我站起身，目光再次锁定证人席上的廖盈舟。她的呼吸比刚才急促了一些，手指死死攥着证词纸的边缘，指节泛白。「廖女士，」我的声音在安静的法庭里显得格外清晰，「检方主张的案发时间是 23:34，而您刚才确认自己是在那个时间点目睹了冲突。但 120 调度系统的时钟与电信授时存在已知的 5 到 8 分钟偏差——这一点，取证时有人向您说明过吗？」廖盈舟的瞳孔微微收缩，她下意识地看向周锐鸣。检察官正低头整理文件，动作有一丝不易察觉的僵硬。审判长陈若澜敏锐地捕捉到了这个眼神交流，她微微前倾，目光在我和证人之间游移。「辩方律师，」陈若澜的声音平稳但带着探究，「请继续。」\n\n「如果这七分钟的偏差被计入，」我转向陪审席，语速放缓，「您看到的可能不是 23:34，而是 23:41 甚至更晚。那时候，监控已经黑屏结束，或者……根本没有人推她下去。」廖盈舟的嘴唇颤抖了一下，似乎有什么话到了嘴边又被咽了回去。我能感觉到某种无形的阻力正在收紧，像有人在暗处调整着天平的砝码，试图压住这即将浮出水面的真相。",
+  "currentChoices": [
+    {
+      "id": "request_recess",
+      "title": "申请短暂休庭",
+      "description": "利用技术偏差问题申请休庭，给证人施加心理压力并争取与调查员接触的机会",
+      "impactHint": "稳妥控场，可能获得线人线索，但会减缓庭审"
+    },
+    {
+      "id": "press_witness_detail",
+      "title": "追问目击细节",
+      "description": "趁证人动摇之际，追问其当时所处的具体位置与光线条件，寻找更多矛盾点",
+      "impactHint": "逻辑推进稳健，但若逼问过紧可能导致证人彻"
+    },
+    {
+      "id": "summon_dispatch_tech",
+      "title": "传唤技术专家",
+      "description": "申请传唤急救中心技术人员出庭，当庭演示时钟偏差的具体影响",
+      "impactHint": "高风险高回报，可能彻底推翻时间线，但也可"
+    },
+    {
+      "id": "hint_external_interference",
+      "title": "暗示外部干预",
+      "description": "向法庭暗示有人刻意利用了这一技术偏差来构陷被告",
+      "impactHint": "极具攻击性，若无实锤易被视作臆测，可能激"
+    }
+  ],
+  "historySummaries": [
+    "序章：案件进入实质审理，案卷中存在多处异常。",
+    "交叉质证中抓住证人时间确认的矛盾点，法官注意到异常但命运阻力悄然上升",
+    "质疑检方时间线成功，暴露监控黑屏与接警记录的矛盾，法官与陪审团开始注意到漏洞",
+    "申请监控鉴定成功，证实黑屏时段存在人为剪辑痕迹，检方立场受挫",
+    "交叉质证法医鉴定成功，暴露原始样本缺失问题，检方证据可信度下降",
+    "当庭聚焦证人犹豫神情致其动摇，虽遭法官警告但成功制造心理压力，同时感知到外部威胁正在靠近。",
+    "当庭揭露120接警时间与手机记录存在7分钟人为错位，成功动摇控方时间线并获法官重视。",
+    "当庭揭露 120 系统时钟偏差问题，动摇证人证词时间基准，引发检方与证人的微妙反应。"
+  ],
+  "memory": {
+    "shortWindow": [
+      "我站起身，将两份证据并排投向投影幕。「监控在 23:34 黑屏 43 秒，而 120 接警记录显示首通电话是 23:41——检方主张的 23:34 案发时间，恰好落在画面缺失的盲区。」周锐鸣的笔尖在纸上重重一顿，但没有立刻反驳。审判长陈若澜微微前倾，目光在两份证据间来回移动。陪审席上有人交换了眼神——他们开始意识到，这条时间线并不像检方描绘的那样严丝合缝。当我坐下时，后背的冷汗比上一轮更密——命运阻力在收紧，像有无形的手在暗处调整着天平。",
+      "我站起身，目光落在审判席上。「审判长，辩方申请对江堤监控原始码流进行技术鉴定。」法庭内瞬间安静下来。周锐鸣的笔尖在纸上停住，他抬头看我，眼神里闪过一丝不易察觉的紧绷。陈若澜微微前倾，手指轻敲桌面：「辩方律师，请说明申请理由。」我将两份对比图投射到幕布上——黑屏前后的帧序列存在不连续的跳变，恢复后的画面角度偏移了 0.3 度。「这不是设备故障能解释的，」我说，「只有人为剪辑才会造成这种特征。」法警取走存储磁带送往鉴定室。等待的二十分钟里，周锐鸣没有再看我，他的手指在桌下轻轻敲击着膝盖。鉴定意见返回时，陈若澜念出结论：「确认存在人为剪辑痕迹。」陪审席上响起一阵压抑的骚动。周锐鸣的脸色沉了下来，但他很快恢复了平静——这个人不会轻易认输。",
+      "我站起身，目光锁定在法医鉴定意见书上。「鉴定人推断死亡时刻区间为23:30至23:50，跨度达20分钟——这在法医学上是否过于宽泛？」法医鉴定人微微一怔，周锐鸣的笔尖在纸上停住。我继续追问：「更重要的是，支撑这一推断的原始体温测量记录、尸斑照片、胃内容物检验样本——这些附录在哪里？」法庭内一片寂静。鉴定人喉结动了动：「部分原始样本……因保存期限已过，未能归档。」陈若澜审判长的眉头微蹙，她在笔录上记下了这句话。我知道，这一击已经动摇了检方证据链中最脆弱的一环，但某种无形的阻力也在悄然收紧——有人不希望这些漏洞被彻底揭开。",
+      "我抓住廖盈舟那一瞬间的迟疑，没有给她喘息的机会。「证人，」我的声音在法庭里回荡，「您刚才回答时，为什么先看了一眼检方席？」廖盈舟的手指猛地攥紧了衣角，眼神慌乱地游移。「我……我只是确认一下程序。」她的声音比之前轻了许多，底气明显不足。周锐鸣立刻起身反对，陈若澜审判长敲槌警告我注意提问方式。虽然被训诫，但我看到了效果——廖盈舟的防线已出现裂痕。然而当我坐回席位时，后背感到一股冰冷的注视，来自旁听席某个角落。某种无形的阻力正在因为我的逼近而收紧。",
+      "我抓住那七分钟的错位，将120接警录音与林策的手机通话记录并置投影。法庭内瞬间安静，只有电流声在回荡。“如果被告人在23:41才报警，为何急救中心的调度记录显示首通电话早在23:34就已接入？”周锐鸣猛地站起，试图以“无关细节”打断，但我语速未停，直接指出这七分钟足以让任何人完成现场布置或逃离。陈若澜审判长抬手制止了检方的异议，目光紧紧锁住那份时间差记录。廖盈舟在证人席上不安地挪动了一下，似乎这七分钟的空白让她想起了什么被刻意忽略的画面。我知道，这不仅仅是笔误，这是有人在这七分钟里篡改了时间的刻度。",
+      "我站起身，目光再次锁定证人席上的廖盈舟。她的呼吸比刚才急促了一些，手指死死攥着证词纸的边缘，指节泛白。「廖女士，」我的声音在安静的法庭里显得格外清晰，「检方主张的案发时间是 23:34，而您刚才确认自己是在那个时间点目睹了冲突。但 120 调度系统的时钟与电信授时存在已知的 5 到 8 分钟偏差——这一点，取证时有人向您说明过吗？」廖盈舟的瞳孔微微收缩，她下意识地看向周锐鸣。检察官正低头整理文件，动作有一丝不易察觉的僵硬。审判长陈若澜敏锐地捕捉到了这个眼神交流，她微微前倾，目光在我和证人之间游移。「辩方律师，」陈若澜的声音平稳但带着探究，「请继续。」\n\n「如果这七分钟的偏差被计入，」我转向陪审席，语速放缓，「您看到的可能不是 23:34，而是 23:41 甚至更晚。那时候，监控已经黑屏结束，或者……根本没有人推她下去。」廖盈舟的嘴唇颤抖了一下，似乎有什么话到了嘴边又被咽了回去。我能感觉到某种无形的阻力正在收紧，像有人在暗处调整着天平的砝码，试图压住这即将浮出水面的真相。"
+    ],
+    "midSummary": [
+      "前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。",
+      "当庭聚焦证人犹豫神情致其动摇，虽遭法官警告但成功制造心理压力，同时感知到外部威胁正在靠近。"
+    ],
+    "longAnchors": [
+      "上一世的判决是错的，但我无法直接说出理由"
+    ]
+  },
+  "rebirth": {
+    "loop": 1,
+    "memoryRetention": 0.6,
+    "knownTruths": [
+      "上一世的判决是错的"
+    ],
+    "fate": 70
+  },
+  "replay": [
+    {
+      "turn": 1,
+      "playerAction": "cross_examine",
+      "narrativeSummary": "交叉质证中抓住证人时间确认的矛盾点，法官注意到异常但命运阻力悄然上升",
+      "statChanges": [
+        "truth_score +4",
+        "judge_trust +4",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 15810,
+        "cachedInputTokens": 0,
+        "outputTokens": 953
+      },
+      "timestamp": "2026-04-18T09:52:36.235Z"
+    },
+    {
+      "turn": 2,
+      "playerAction": "challenge_timeline",
+      "narrativeSummary": "质疑检方时间线成功，暴露监控黑屏与接警记录的矛盾，法官与陪审团开始注意到漏洞",
+      "statChanges": [
+        "truth_score +4",
+        "judge_trust +3",
+        "jury_bias -2",
+        "evidence_integrity +3",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16151,
+        "cachedInputTokens": 0,
+        "outputTokens": 967
+      },
+      "timestamp": "2026-04-18T09:53:44.192Z"
+    },
+    {
+      "turn": 3,
+      "playerAction": "request_cam_analysis",
+      "narrativeSummary": "申请监控鉴定成功，证实黑屏时段存在人为剪辑痕迹，检方立场受挫",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +4",
+        "evidence_integrity +5",
+        "fate +3",
+        "evidence_status: unverified -> verified"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16669,
+        "cachedInputTokens": 0,
+        "outputTokens": 781
+      },
+      "timestamp": "2026-04-18T10:04:49.722Z"
+    },
+    {
+      "turn": 4,
+      "playerAction": "cross_examine_forensic",
+      "narrativeSummary": "交叉质证法医鉴定成功，暴露原始样本缺失问题，检方证据可信度下降",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +4",
+        "jury_bias -1",
+        "evidence_integrity +5",
+        "fate +3"
+      ],
+      "events": [
+        "milestone_new_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 15763,
+        "cachedInputTokens": 0,
+        "outputTokens": 801
+      },
+      "timestamp": "2026-04-19T07:46:58.797Z"
+    },
+    {
+      "turn": 5,
+      "playerAction": "highlight_witness_hesitation",
+      "narrativeSummary": "当庭聚焦证人犹豫神情致其动摇，虽遭法官警告但成功制造心理压力，同时感知到外部威胁正在靠近。",
+      "statChanges": [
+        "truth_score +4",
+        "judge_trust -2",
+        "public_pressure +2",
+        "evidence_integrity +1",
+        "key_witness_trust -4",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16008,
+        "cachedInputTokens": 0,
+        "outputTokens": 870
+      },
+      "timestamp": "2026-04-19T07:47:47.061Z"
+    },
+    {
+      "turn": 6,
+      "playerAction": "pivot_to_call_log",
+      "narrativeSummary": "当庭揭露120接警时间与手机记录存在7分钟人为错位，成功动摇控方时间线并获法官重视。",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +4",
+        "jury_bias -2",
+        "public_pressure +1",
+        "evidence_integrity +3",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16155,
+        "cachedInputTokens": 0,
+        "outputTokens": 992
+      },
+      "timestamp": "2026-04-19T09:10:30.265Z"
+    },
+    {
+      "turn": 7,
+      "playerAction": "probe_witness_memory",
+      "narrativeSummary": "当庭揭露 120 系统时钟偏差问题，动摇证人证词时间基准，引发检方与证人的微妙反应。",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +4",
+        "jury_bias -3",
+        "evidence_integrity +3",
+        "key_witness_trust -2",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16413,
+        "cachedInputTokens": 0,
+        "outputTokens": 1145
+      },
+      "timestamp": "2026-04-19T09:12:18.359Z"
+    }
+  ],
+  "gameOver": false,
+  "endingType": null,
+  "endingNarrative": "",
+  "lastChoiceId": "",
+  "maxRevealedChapter": 1
+}

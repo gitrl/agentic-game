@@ -1,0 +1,152 @@
+{
+  "sessionId": "caf21dd6-493c-4b98-9842-06f2cafff63e",
+  "initialized": true,
+  "turn": 1,
+  "progress": {
+    "chapter": 1,
+    "chapterTitle": "回溯醒来",
+    "sceneInChapter": 2,
+    "maxScenesInChapter": 10
+  },
+  "player": {
+    "name": "沈言",
+    "role": "辩护律师",
+    "talent": "交叉质证",
+    "starterItem": "案卷标注笔"
+  },
+  "stats": {
+    "truthScore": 55,
+    "judgeTrust": 60,
+    "juryBias": -8,
+    "publicPressure": 41,
+    "evidenceIntegrity": 55
+  },
+  "flags": {
+    "keyWitnessFlipped": false,
+    "forgedEvidenceAdmitted": false,
+    "interferenceDetected": false
+  },
+  "evidencePool": [
+    {
+      "id": "ev-river-cam-raw",
+      "title": "江堤监控原始码流",
+      "source": "市政天网备份磁带",
+      "reliability": 56,
+      "status": "unverified",
+      "note": "案发前 14 分钟出现 43 秒黑屏，帧序列存在跳变"
+    },
+    {
+      "id": "ev-emergency-call",
+      "title": "120 接警与调度录音",
+      "source": "急救中心调度台",
+      "reliability": 52,
+      "status": "unverified",
+      "note": "首通报警时间与警方到场记录存在 7 分钟错位"
+    },
+    {
+      "id": "ev-forensic-opinion",
+      "title": "首轮法医鉴定意见",
+      "source": "司法鉴定所",
+      "reliability": 44,
+      "status": "challenged",
+      "note": "死亡时刻区间过宽，且关键体征推断缺乏原始样本附录"
+    }
+  ],
+  "npcRelations": {
+    "chiefProsecutor": {
+      "trust": 26,
+      "stance": "hostile"
+    },
+    "presidingJudge": {
+      "trust": 57,
+      "stance": "neutral"
+    },
+    "keyWitness": {
+      "trust": 35,
+      "stance": "neutral"
+    },
+    "investigatorXu": {
+      "trust": 55,
+      "stance": "ally"
+    }
+  },
+  "verdictOutlook": "undetermined",
+  "currentNarrative": "我站起身，声音在空旷的法庭里回荡。'审判长，辩方对控方提交的时间线证据提出程序异议。'陈若澜的目光落在我身上，没有说话，只是微微颔首示意继续。我指向投影幕布上的接警记录与通话清单对比图，'120 接警系统显示的首通报警时间为 23:41，但被告手机通话记录显示首次拨出电话为 23:34——七分钟的错位，足以颠覆整个案发时间线的重建。'周锐鸣的表情凝了一瞬，随即恢复平静：'辩护人，调度系统可能存在时钟偏差，这不能证明什么。''正因如此，才需要原始日志佐证。'我转向审判台，'辩方申请调取急救中心原始调度日志，以核实系统时间戳的准确性。'陈若澜沉默了片刻，法槌轻敲桌面：'本庭准许。检方需在三个工作日内补充提交原始日志或出具系统时钟校准证明。'周锐鸣的嘴角抿成一条直线。散庭后，书记员递来一份通知——看守所方面已批准我的会见申请，时间定在明天上午九点。走出法院大门时，手机震动了一下，是许岚发来的简短消息：'47 号探头的维修记录，有人动过手脚。'",
+  "currentChoices": [
+    {
+      "id": "visit_defendant",
+      "title": "看守所会见林策",
+      "description": "前往市第一看守所会见室，当面听取林策对案发当晚的完整叙述",
+      "impactHint": "安全但信息有限，可能获得关键细节"
+    },
+    {
+      "id": "check_emergency_logs",
+      "title": "调取急救中心原始日志",
+      "description": "前往青禾市 120 急救指挥中心调度室，申请查阅接警系统原始时间戳记录",
+      "impactHint": "稳步提升证据可信度，需正式手续"
+    },
+    {
+      "id": "contact_xu_private",
+      "title": "咖啡馆接触许岚",
+      "description": "在老城区'半盏茶'咖啡馆与许岚非正式会面，试探他对监控跳帧的看法",
+      "impactHint": "高风险，可能获得隐性线索但增加暴露风险"
+    },
+    {
+      "id": "re_examine_forensic",
+      "title": "申请补充法医鉴定",
+      "description": "向法庭提交申请书，要求司法鉴定所补充提供原始样本附录或重新出具鉴定意见",
+      "impactHint": "可能激怒检方，但若成功可动摇核心证据"
+    }
+  ],
+  "historySummaries": [
+    "序章：案件进入实质审理，案卷中存在多处异常。",
+    "法庭上提出程序异议成功，获准调取急救中心原始日志，同时收到许岚关于监控探头被动手脚的暗示。"
+  ],
+  "memory": {
+    "shortWindow": [
+      "走进青禾中院第一庭的时候，走廊尽头的日光灯正好闪了一下。\n\n我叫沈言。案卷摊在桌上，案卷标注笔压住翻起的页角。被告席上坐着林策，二十七岁，网约车司机——检方以故意杀人罪起诉他，说他在江堤把一个叫梁蔚的女人推下了护栏。\n\n梁蔚，三十一岁，青禾市审计局的重点项目审计员。检方说林策在 23:34 与她发生冲突，之后伪造报警时间、清理车内痕迹。证据链看起来很完整，公诉人周锐鸣显然志在必得。\n\n但案卷里有些东西不对。江堤监控在 23:34 出现了 43 秒的黑屏。120 接警记录和林策手机通话时间对不上，差了整整 7 分钟。法医鉴定意见的死亡时间区间宽得离谱，而且原始样本附录——不见了。\n\n我说不清哪里不对，但直觉告诉我，有些关键的东西被忽略了——或者被刻意隐藏了。\n\n我不能把直觉当证据。任何没有证据支撑的超前信息都会被认定为诱导证词。我只能从这三份疑点重重的材料开始，一步一步把真相挖出来。",
+      "我站起身，声音在空旷的法庭里回荡。'审判长，辩方对控方提交的时间线证据提出程序异议。'陈若澜的目光落在我身上，没有说话，只是微微颔首示意继续。我指向投影幕布上的接警记录与通话清单对比图，'120 接警系统显示的首通报警时间为 23:41，但被告手机通话记录显示首次拨出电话为 23:34——七分钟的错位，足以颠覆整个案发时间线的重建。'周锐鸣的表情凝了一瞬，随即恢复平静：'辩护人，调度系统可能存在时钟偏差，这不能证明什么。''正因如此，才需要原始日志佐证。'我转向审判台，'辩方申请调取急救中心原始调度日志，以核实系统时间戳的准确性。'陈若澜沉默了片刻，法槌轻敲桌面：'本庭准许。检方需在三个工作日内补充提交原始日志或出具系统时钟校准证明。'周锐鸣的嘴角抿成一条直线。散庭后，书记员递来一份通知——看守所方面已批准我的会见申请，时间定在明天上午九点。走出法院大门时，手机震动了一下，是许岚发来的简短消息：'47 号探头的维修记录，有人动过手脚。'"
+    ],
+    "midSummary": [
+      "前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。"
+    ],
+    "longAnchors": [
+      "上一世的判决是错的，但我无法直接说出理由"
+    ]
+  },
+  "rebirth": {
+    "loop": 1,
+    "memoryRetention": 0.6,
+    "knownTruths": [
+      "上一世的判决是错的"
+    ],
+    "fate": 52
+  },
+  "replay": [
+    {
+      "turn": 1,
+      "playerAction": "file_motion",
+      "narrativeSummary": "法庭上提出程序异议成功，获准调取急救中心原始日志，同时收到许岚关于监控探头被动手脚的暗示。",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +10",
+        "jury_bias -8",
+        "public_pressure +1",
+        "evidence_integrity +5",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 17130,
+        "cachedInputTokens": 0,
+        "outputTokens": 846
+      },
+      "timestamp": "2026-04-19T15:56:25.926Z"
+    }
+  ],
+  "gameOver": false,
+  "endingType": null,
+  "endingNarrative": "",
+  "lastChoiceId": "",
+  "maxRevealedChapter": 1
+}

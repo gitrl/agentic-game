@@ -1,0 +1,228 @@
+{
+  "sessionId": "808bc21d-b797-4827-a37c-6242ac3de8aa",
+  "initialized": true,
+  "turn": 4,
+  "progress": {
+    "chapter": 1,
+    "chapterTitle": "回溯醒来",
+    "sceneInChapter": 5,
+    "maxScenesInChapter": 8
+  },
+  "player": {
+    "name": "沈言",
+    "role": "辩护律师",
+    "talent": "交叉质证",
+    "starterItem": "案卷标注笔"
+  },
+  "stats": {
+    "truthScore": 68,
+    "judgeTrust": 61,
+    "juryBias": -1,
+    "publicPressure": 40,
+    "evidenceIntegrity": 67
+  },
+  "flags": {
+    "keyWitnessFlipped": false,
+    "forgedEvidenceAdmitted": false,
+    "interferenceDetected": false
+  },
+  "evidencePool": [
+    {
+      "id": "ev-river-cam-raw",
+      "title": "江堤监控原始码流",
+      "source": "市政天网备份磁带",
+      "reliability": 60,
+      "status": "unverified",
+      "note": "黑屏前后画面角度偏移约 2.3 度，暗示监控设备可能在黑屏期间被人为调整"
+    },
+    {
+      "id": "ev-emergency-call",
+      "title": "120 接警与调度录音",
+      "source": "急救中心调度台",
+      "reliability": 52,
+      "status": "unverified",
+      "note": "首通报警时间与警方到场记录存在 7 分钟错位"
+    },
+    {
+      "id": "ev-forensic-opinion",
+      "title": "首轮法医鉴定意见",
+      "source": "司法鉴定所",
+      "reliability": 41,
+      "status": "challenged",
+      "note": "辩方正式申请补充原始样本附录，鉴定所需在 5 个工作日内回应"
+    },
+    {
+      "id": "ev-toll-record",
+      "title": "跨江收费站过闸记录",
+      "source": "市交通管理局调取",
+      "reliability": 63,
+      "status": "unverified",
+      "note": "案发时段有一辆未注册车辆经过江堤附近出口"
+    }
+  ],
+  "npcRelations": {
+    "chiefProsecutor": {
+      "trust": 27,
+      "stance": "hostile"
+    },
+    "presidingJudge": {
+      "trust": 53,
+      "stance": "neutral"
+    },
+    "keyWitness": {
+      "trust": 33,
+      "stance": "neutral"
+    },
+    "investigatorXu": {
+      "trust": 55,
+      "stance": "ally"
+    }
+  },
+  "verdictOutlook": "undetermined",
+  "currentNarrative": "我将监控恢复前后的两帧画面并排投射到法庭屏幕上，用案卷标注笔圈出护栏立柱的相对位置。'审判长，请注意 B 段 47 号监控在黑屏前后的拍摄角度——'我放大画面，立柱的偏移量在屏幕上清晰可见，'约 2.3 度。'陈若澜的身体微微前倾，目光在两组数据间来回移动。周锐鸣的指尖停在了案卷上，没有像往常那样立刻提出异议。这个角度的变化意味着什么，在场的人都心知肚明——有人在那 43 秒黑屏期间动过那台设备。我正要继续陈述，余光瞥见廖盈舟的手再次握紧，而她的视线又一次飘向旁听席那个灰夹克男人的方向。",
+  "currentChoices": [
+    {
+      "id": "highlight_angle_shift",
+      "title": "指出角度偏移",
+      "description": "当庭指出监控角度变化暗示设备被调整",
+      "impactHint": "高风险，可能激怒检方"
+    },
+    {
+      "id": "cross_check_witness_view",
+      "title": "交叉验证证人视角",
+      "description": "用新发现的角度数据重新询问廖盈舟",
+      "impactHint": "可能突破证人防线"
+    },
+    {
+      "id": "request_cam_expert",
+      "title": "申请监控专家出庭",
+      "description": "要求调取天网备份中心的技术人员作证",
+      "impactHint": "稳妥但耗时"
+    },
+    {
+      "id": "probe_gray_jacket",
+      "title": "追问灰夹克男子",
+      "description": "要求法庭记录旁听席可疑人员身份",
+      "impactHint": "高风险，可能打草惊蛇"
+    },
+    {
+      "id": "link_timeline_gap",
+      "title": "关联时间线漏洞",
+      "description": "将监控黑屏与 7 分钟报警错位进行串联分析",
+      "impactHint": "推进真相，需法官许可"
+    }
+  ],
+  "historySummaries": [
+    "序章：案件进入实质审理，案卷中存在多处异常。",
+    "核对证据链发现多处封存与标注异常，法官注意到专业表现，检察官反应微妙",
+    "申请补充法医鉴定获准，检察官通话内容暗示背后有人施压",
+    "交叉质证发现证人证词与监控画面存在视角矛盾，证人表现出不自然的犹豫，并似乎受到旁听席某人影响",
+    "比对监控发现黑屏前后角度偏移 2.3 度，暗示设备被人为调整，证人再次看向旁听席可疑人员"
+  ],
+  "memory": {
+    "shortWindow": [
+      "第1章《回溯醒来》第1/8幕。\n我是沈言，以辩护律师身份走进青禾中院第一庭，把案卷标注笔压在案卷边缘。\n【案件名称】青禾江堤坠亡案\n【被告身份】林策，27岁，网约车司机；检方以故意杀人罪提起公诉。\n【死者身份】梁蔚，31岁，青禾市审计局重点项目审计员。\n【检方核心主张】林策于 23:34 在江堤与梁蔚发生冲突，将其推落护栏，随后伪造报警时间并清理车内痕迹。\n【我的直觉】上一世的判决是错的。我说不清哪里不对，但总觉得有些关键的东西被忽略了——或者被刻意隐藏了。\n【案卷中的异常】监控在 23:34 出现 43 秒黑屏，120 接警记录与手机通话时间错位 7 分钟，首轮法医鉴定意见缺失原始样本附录。\n【规则约束】我不能直接说出\"我知道结局\"，任何没有证据支撑的超前信息都会被认定为诱导证词。\n【重生参数】循环次数 1，记忆保留 60%，命运阻力 50。\n【本局目标】依靠'交叉质证'寻找真相，在终审前为林策争取公正判决。",
+      "我逐项翻阅证据封存记录，指尖在调取流程的时间戳上停顿。江堤监控的备份磁带编号与入库登记有半小时的错位，120 录音的原始载体标注模糊，法医鉴定意见的附录页码被人用铅笔轻轻划过。陈若澜审判长抬眼看了我一次，目光在我标注的几处异常上停留了片刻。当我合上案卷时，余光瞥见周锐鸣的嘴角微微抽动——他注意到了我的动作，但表情里有一丝我读不懂的东西。",
+      "我起身，将补充鉴定申请书推向书记员席位。'审判长，辩方要求司法鉴定所补充首轮法医鉴定的原始样本附录及完整检验流程记录。'陈若澜的目光在申请书上停留片刻，微微颔首：'申请予以受理，鉴定所须在五个工作日内书面回应。'余光里，周锐鸣的指尖在案卷边缘轻轻叩了一下——幅度很小，但我看见了。散庭时，他站在走廊尽头打电话，声音压得很低：'……他们开始动鉴定了。'我假装整理公文包，耳朵却捕捉到了后半句：'……得加快。'",
+      "我起身走向证人席，目光落在廖盈舟交叠的双手上。'证人，你刚才说案发时站在护栏外侧三米处——但监控恢复后的画面里，那个位置的栏杆高度只到你的腰部。'她的手指收紧了，喉结滚动了一下。周锐鸣在席位上微微前倾，指尖按住案卷边缘。陈若澜的目光在我与证人之间移动，没有打断。'我……可能记错了距离。'她的声音比之前低了半度。我记下这个细节，继续追问她看到的冲突过程，但每当触及关键时间点，她的回答就会出现短暂的迟滞。那不是记忆模糊的停顿，更像是在某个看不见的边界前犹豫。质证结束时，我回到席位，余光瞥见廖盈舟迅速扫了一眼旁听席的某个角落——那里坐着一个穿灰色夹克的男人，从开庭起就一直没动过。",
+      "我将监控恢复前后的两帧画面并排投射到法庭屏幕上，用案卷标注笔圈出护栏立柱的相对位置。'审判长，请注意 B 段 47 号监控在黑屏前后的拍摄角度——'我放大画面，立柱的偏移量在屏幕上清晰可见，'约 2.3 度。'陈若澜的身体微微前倾，目光在两组数据间来回移动。周锐鸣的指尖停在了案卷上，没有像往常那样立刻提出异议。这个角度的变化意味着什么，在场的人都心知肚明——有人在那 43 秒黑屏期间动过那台设备。我正要继续陈述，余光瞥见廖盈舟的手再次握紧，而她的视线又一次飘向旁听席那个灰夹克男人的方向。"
+    ],
+    "midSummary": [
+      "前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。"
+    ],
+    "longAnchors": [
+      "上一世的判决是错的，但我无法直接说出理由"
+    ]
+  },
+  "rebirth": {
+    "loop": 1,
+    "memoryRetention": 0.6,
+    "knownTruths": [
+      "上一世的判决是错的"
+    ],
+    "fate": 50
+  },
+  "replay": [
+    {
+      "turn": 1,
+      "playerAction": "examine_evidence",
+      "narrativeSummary": "核对证据链发现多处封存与标注异常，法官注意到专业表现，检察官反应微妙",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +2",
+        "evidence_integrity +5",
+        "fate -1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 15829,
+        "cachedInputTokens": 0,
+        "outputTokens": 859
+      },
+      "timestamp": "2026-04-18T09:12:24.289Z"
+    },
+    {
+      "turn": 2,
+      "playerAction": "request_supplementary",
+      "narrativeSummary": "申请补充法医鉴定获准，检察官通话内容暗示背后有人施压",
+      "statChanges": [
+        "truth_score +4",
+        "judge_trust +3",
+        "evidence_integrity +5",
+        "fate -1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16493,
+        "cachedInputTokens": 0,
+        "outputTokens": 1157
+      },
+      "timestamp": "2026-04-18T09:14:35.249Z"
+    },
+    {
+      "turn": 3,
+      "playerAction": "cross_examine_witness",
+      "narrativeSummary": "交叉质证发现证人证词与监控画面存在视角矛盾，证人表现出不自然的犹豫，并似乎受到旁听席某人影响",
+      "statChanges": [
+        "truth_score +4",
+        "judge_trust +4",
+        "jury_bias -1",
+        "evidence_integrity +2",
+        "key_witness_trust -2",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 16745,
+        "cachedInputTokens": 0,
+        "outputTokens": 1235
+      },
+      "timestamp": "2026-04-18T09:16:58.853Z"
+    },
+    {
+      "turn": 4,
+      "playerAction": "compare_cam_footage",
+      "narrativeSummary": "比对监控发现黑屏前后角度偏移 2.3 度，暗示设备被人为调整，证人再次看向旁听席可疑人员",
+      "statChanges": [
+        "truth_score +5",
+        "judge_trust +2",
+        "evidence_integrity +5",
+        "fate -1"
+      ],
+      "events": [
+        "milestone_new_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 17031,
+        "cachedInputTokens": 0,
+        "outputTokens": 1095
+      },
+      "timestamp": "2026-04-18T09:48:45.444Z"
+    }
+  ],
+  "gameOver": false,
+  "endingType": null,
+  "endingNarrative": "",
+  "lastChoiceId": "",
+  "maxRevealedChapter": 1
+}

@@ -499,6 +499,14 @@ function App() {
       return;
     }
 
+    if (eventType === "status") {
+      const message = (payload as { message?: string }).message;
+      if (message) {
+        setStatus(message);
+      }
+      return;
+    }
+
     if (eventType === "done") {
       const summary = (payload as { summary?: string }).summary ?? "回合完成";
 
@@ -895,10 +903,52 @@ function App() {
 
                 {latestSaveId ? <p className="text-xs text-cyan-200">最近存档：{latestSaveId}</p> : null}
                 {replayData ? (
-                  <div className="space-y-1 rounded-md border border-slate-700/80 bg-slate-900/70 p-2 text-xs text-slate-300">
-                    <p>总回合：{replayData.totalTurns}</p>
-                    <p>总 Action：{replayData.tokenSummary.totalActions}</p>
-                    <p>平均 Token/Action：{replayData.tokenSummary.avgPerAction}</p>
+                  <div className="space-y-2">
+                    <div className="space-y-1 rounded-md border border-slate-700/80 bg-slate-900/70 p-2 text-xs text-slate-300">
+                      <p>总回合：{replayData.totalTurns}</p>
+                      <p>总 Action：{replayData.tokenSummary.totalActions}</p>
+                      <p>新增输入 Token：{replayData.tokenSummary.inputTokens}</p>
+                      <p>缓存输入 Token：{replayData.tokenSummary.cachedInputTokens}</p>
+                      <p>输出 Token：{replayData.tokenSummary.outputTokens}</p>
+                      <p>平均 Token/Action：{replayData.tokenSummary.avgPerAction}</p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      className="w-full bg-slate-800 text-slate-100 hover:bg-slate-700 text-xs"
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(replayData, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `replay-${replayData.sessionId}-${replayData.totalTurns}轮.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      导出回放日志 (JSON)
+                    </Button>
+                    <details className="rounded-md border border-slate-700/80 bg-slate-900/70">
+                      <summary className="cursor-pointer px-2 py-1.5 text-xs text-cyan-200 hover:text-cyan-100">
+                        展开逐轮明细 ({replayData.replay.length} 轮)
+                      </summary>
+                      <div className="max-h-[400px] overflow-y-auto">
+                        {replayData.replay.map((entry) => (
+                          <div key={entry.turn} className="border-t border-slate-700/50 px-2 py-2 text-xs text-slate-300">
+                            <p className="font-semibold text-slate-100">轮 {entry.turn} — {entry.playerAction}</p>
+                            <p className="mt-1 text-slate-400">{entry.narrativeSummary}</p>
+                            {entry.statChanges.length > 0 && (
+                              <p className="mt-1">数值：{entry.statChanges.join("，")}</p>
+                            )}
+                            {entry.events.length > 0 && (
+                              <p className="mt-1 text-amber-200">事件：{entry.events.join("，")}</p>
+                            )}
+                            <p className="mt-1 text-cyan-300/70">
+                              Token: in {entry.tokenUsage.inputTokens} / cache {entry.tokenUsage.cachedInputTokens} / out {entry.tokenUsage.outputTokens}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
                   </div>
                 ) : null}
               </CardContent>

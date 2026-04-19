@@ -23,6 +23,12 @@ type AgentTurnResult = {
   inputFeedback: InputFeedback;
 };
 
+const MAX_TOOL_ROUNDS = 3;
+const MAX_MEMORY_CONTEXT_CHARS = 1400;
+const MAX_RECENT_SUMMARIES = 2;
+const MAX_EVIDENCE_ITEMS = 4;
+const MAX_LAST_CHOICES = 4;
+
 export class AgentService {
   private readonly config: LlmConfig;
   private readonly client: OpenAI;
@@ -63,6 +69,7 @@ export class AgentService {
   ): Promise<AgentTurnResult> {
     const memoryContext = await readMemoryFile(state.sessionId);
     const userMessage = this.buildUserContext(state, playerAction, memoryContext);
+    const toolsForTurn = this.buildToolsForTurn(playerAction);
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: "system", content: AGENT_SYSTEM_PROMPT },
@@ -71,29 +78,34 @@ export class AgentService {
 
     const allToolCalls: ToolCallRecord[] = [];
     let totalPromptTokens = 0;
+    let totalCachedTokens = 0;
     let totalCompletionTokens = 0;
     let finalContent = "";
 
-    // Tool-calling loop: max 5 rounds to prevent infinite loops
-    for (let round = 0; round < 5; round++) {
+    // Tool-calling loop: keep rounds low to reduce latency
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       let completion: OpenAI.ChatCompletion;
       try {
         completion = await (this.client.chat.completions.create as Function)({
           model: this.config.model,
           temperature: this.config.temperature,
           messages,
-          tools: TOOL_DEFINITIONS,
+          tools: toolsForTurn,
           tool_choice: "auto",
-          enable_thinking: true,
-          thinking_budget: 1024
+          enable_thinking: this.config.thinkingEnabled,
+          thinking_budget: this.config.thinkingBudget
         }) as OpenAI.ChatCompletion;
       } catch (error) {
         const msg = error instanceof Error ? error.message : "未知错误";
         throw new AppError(502, `AI 服务调用失败: ${msg}，请重试。`, "LLM_ERROR");
       }
 
-      totalPromptTokens += completion.usage?.prompt_tokens ?? 0;
-      totalCompletionTokens += completion.usage?.completion_tokens ?? 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const usage = completion.usage as any;
+      const cachedTokens: number = usage?.prompt_tokens_details?.cached_tokens ?? 0;
+      totalPromptTokens += (usage?.prompt_tokens ?? 0) - cachedTokens;
+      totalCachedTokens += cachedTokens;
+      totalCompletionTokens += usage?.completion_tokens ?? 0;
 
       const choice = completion.choices[0];
       if (!choice) {
@@ -126,7 +138,7 @@ export class AgentService {
         messages.push({
           role: "tool",
           tool_call_id: toolCall.id,
-          content: JSON.stringify(record.result)
+          content: JSON.stringify(summarizeToolResult(record))
         });
       }
 
@@ -151,7 +163,7 @@ export class AgentService {
       toolCalls: allToolCalls,
       tokenUsage: {
         inputTokens: totalPromptTokens,
-        cachedInputTokens: 0,
+        cachedInputTokens: totalCachedTokens,
         outputTokens: totalCompletionTokens
       },
       inputFeedback
@@ -183,35 +195,81 @@ export class AgentService {
     const nextTurn = state.turn + 1;
     const progress = this.deriveProgress(nextTurn);
 
-    // 最近 3 轮摘要，提供短期叙事连贯性
-    const recentSummaries = state.historySummaries.slice(-3);
+    const recentSummaries = state.historySummaries
+      .slice(-MAX_RECENT_SUMMARIES)
+      .map((s) => s.slice(0, 90));
+    const compactChoices = state.currentChoices.slice(0, MAX_LAST_CHOICES).map((c) => ({
+      id: c.id,
+      title: c.title,
+      impactHint: c.impactHint
+    }));
 
     return {
       turn: nextTurn,
       progress,
-      player: state.player,
+      player: {
+        name: state.player.name,
+        role: state.player.role,
+        talent: state.player.talent
+      },
       playerAction: actionDesc,
       stats: state.stats,
       flags: state.flags,
-      evidencePool: state.evidencePool,
+      evidencePool: this.buildEvidenceContext(state.evidencePool),
       npcRelations: state.npcRelations,
       verdictOutlook: state.verdictOutlook,
       rebirth: state.rebirth,
       recentHistory: recentSummaries.length > 0
         ? recentSummaries.map((s, i) => `[轮${nextTurn - recentSummaries.length + i}] ${s}`).join("\n")
         : "(暂无历史)",
-      memoryContext: truncateContext(memoryContext, 3000) || "(暂无记忆记录)",
-      lastChoices: state.currentChoices,
+      memoryContext: truncateContext(memoryContext, MAX_MEMORY_CONTEXT_CHARS) || "(暂无记忆记录)",
+      lastChoices: compactChoices,
       worldContext: WORLD_CONTEXT,
       chapterScript: buildChapterContext(Math.max(state.maxRevealedChapter ?? 1, progress.chapter))
     };
   }
 
+  private buildEvidenceContext(evidencePool: GameState["evidencePool"]) {
+    const priority = new Map([
+      ["challenged", 3],
+      ["verified", 2],
+      ["unverified", 1]
+    ]);
+
+    return evidencePool
+      .map((e, index) => ({ evidence: e, index }))
+      .sort((a, b) => {
+        const p = (priority.get(b.evidence.status) ?? 0) - (priority.get(a.evidence.status) ?? 0);
+        if (p !== 0) return p;
+        if (a.evidence.reliability !== b.evidence.reliability) {
+          return b.evidence.reliability - a.evidence.reliability;
+        }
+        return b.index - a.index;
+      })
+      .slice(0, MAX_EVIDENCE_ITEMS)
+      .map(({ evidence }) => ({
+        id: evidence.id,
+        title: evidence.title,
+        reliability: evidence.reliability,
+        status: evidence.status,
+        note: evidence.note.slice(0, 80)
+      }));
+  }
+
+  private buildToolsForTurn(playerAction: { choiceId?: string; userInput?: string }) {
+    if (playerAction.userInput?.trim()) {
+      return TOOL_DEFINITIONS;
+    }
+    return TOOL_DEFINITIONS.filter(
+      (tool) => !(tool.type === "function" && tool.function.name === "resolve_player_input")
+    );
+  }
+
   private deriveProgress(turn: number) {
-    const SCENES_PER_CHAPTER = 8;
+    const SCENES_PER_CHAPTER = 10;
     const CHAPTER_TITLES = ["回溯醒来", "前案重演", "证链反噬", "终局对证", "改判黎明"];
-    const chapter = Math.floor(turn / SCENES_PER_CHAPTER) + 1;
-    const chapterTitle = CHAPTER_TITLES[(chapter - 1) % CHAPTER_TITLES.length];
+    const chapter = Math.min(Math.floor(turn / SCENES_PER_CHAPTER) + 1, CHAPTER_TITLES.length);
+    const chapterTitle = CHAPTER_TITLES[chapter - 1];
     const sceneInChapter = (turn % SCENES_PER_CHAPTER) + 1;
     return { chapter, chapterTitle, sceneInChapter, maxScenesInChapter: SCENES_PER_CHAPTER };
   }
@@ -226,8 +284,8 @@ export class AgentService {
       const parsed = JSON.parse(content.trim()) as { narrative?: string; summary?: string };
       if (parsed.narrative && parsed.summary) {
         return {
-          narrative: parsed.narrative.slice(0, 1200),
-          summary: parsed.summary.slice(0, 220)
+          narrative: parsed.narrative.slice(0, 800),
+          summary: parsed.summary.slice(0, 80)
         };
       }
     } catch {
@@ -241,8 +299,8 @@ export class AgentService {
         const parsed = JSON.parse(jsonMatch[0]) as { narrative?: string; summary?: string };
         if (parsed.narrative && parsed.summary) {
           return {
-            narrative: parsed.narrative.slice(0, 1200),
-            summary: parsed.summary.slice(0, 220)
+            narrative: parsed.narrative.slice(0, 800),
+            summary: parsed.summary.slice(0, 80)
           };
         }
       } catch {
@@ -325,4 +383,27 @@ function truncateContext(text: string, maxChars: number): string {
   const headSize = Math.floor(maxChars * 0.7);
   const tailSize = maxChars - headSize - 20;
   return text.slice(0, headSize) + "\n\n...(中间内容已省略)...\n\n" + text.slice(-tailSize);
+}
+
+function summarizeToolResult(record: ToolCallRecord): unknown {
+  const result = record.result as Record<string, unknown>;
+
+  switch (record.name) {
+    case "update_stats":
+      return { ok: true, applied: result.applied ?? null };
+    case "generate_choices": {
+      const choices = Array.isArray(result.choices) ? result.choices as Array<{ id?: string }> : [];
+      return { ok: true, stored: result.stored ?? choices.length, choiceIds: choices.map((c) => c.id ?? "") };
+    }
+    case "resolve_player_input":
+      return { ok: true, resolvedChoiceId: result.resolvedChoiceId ?? null, confidence: result.confidence ?? null };
+    case "update_evidence":
+      return { ok: true, action: result.action ?? null, evidenceId: (result.evidence as { id?: string } | undefined)?.id ?? null };
+    case "shift_npc_relation":
+      return { ok: true, npcId: result.npcId ?? null, trustAfter: result.trustAfter ?? null };
+    case "write_memory_anchor":
+      return { ok: result.stored ?? false, total: result.total ?? null };
+    default:
+      return result;
+  }
 }

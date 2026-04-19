@@ -11,10 +11,8 @@ import type {
   Stats
 } from "../types/game.js";
 
-const SCENES_PER_CHAPTER = 8;
+const SCENES_PER_CHAPTER = 10;
 const CHAPTER_TITLES = ["回溯醒来", "前案重演", "证链反噬", "终局对证", "改判黎明"];
-const COURTROOM_LOCALES = ["青禾中院第一庭", "刑侦证据保全室", "陪审员评议室", "司法鉴定中心", "审判长合议庭"];
-
 const clamp = (value: number, min: number, max: number): number => {
   return Math.min(max, Math.max(min, value));
 };
@@ -145,19 +143,19 @@ export const initializeGame = (
   state.verdictOutlook = "undetermined";
 
   const prologue = [
-    `第${state.progress.chapter}章《${state.progress.chapterTitle}》第${state.progress.sceneInChapter}/${state.progress.maxScenesInChapter}幕。`,
-    `我是${state.player.name}，以${state.player.role}身份走进${COURTROOM_LOCALES[0]}，把${state.player.starterItem}压在案卷边缘。`,
-    `【案件名称】青禾江堤坠亡案`,
-    `【被告身份】林策，27岁，网约车司机；检方以故意杀人罪提起公诉。`,
-    `【死者身份】梁蔚，31岁，青禾市审计局重点项目审计员。`,
-    `【检方核心主张】林策于 23:34 在江堤与梁蔚发生冲突，将其推落护栏，随后伪造报警时间并清理车内痕迹。`,
-    `【我的直觉】上一世的判决是错的。我说不清哪里不对，但总觉得有些关键的东西被忽略了——或者被刻意隐藏了。`,
-    `【案卷中的异常】监控在 23:34 出现 43 秒黑屏，120 接警记录与手机通话时间错位 7 分钟，首轮法医鉴定意见缺失原始样本附录。`,
-    `【规则约束】我不能直接说出"我知道结局"，任何没有证据支撑的超前信息都会被认定为诱导证词。`,
-    `【重生参数】循环次数 ${state.rebirth.loop}，记忆保留 ${Math.round(
-      state.rebirth.memoryRetention * 100
-    )}%，命运阻力 ${state.rebirth.fate}。`,
-    `【本局目标】依靠'${state.player.talent}'寻找真相，在终审前为林策争取公正判决。`
+    `走进青禾中院第一庭的时候，走廊尽头的日光灯正好闪了一下。`,
+    ``,
+    `我叫${state.player.name}。案卷摊在桌上，${state.player.starterItem}压住翻起的页角。被告席上坐着林策，二十七岁，网约车司机——检方以故意杀人罪起诉他，说他在江堤把一个叫梁蔚的女人推下了护栏。`,
+    ``,
+    `梁蔚，三十一岁，青禾市审计局的重点项目审计员。检方说林策在 23:34 与她发生冲突，之后伪造报警时间、清理车内痕迹。证据链看起来很完整，公诉人周锐鸣显然志在必得。`,
+    ``,
+    `但案卷里有些东西不对。江堤监控在 23:34 出现了 43 秒的黑屏。120 接警记录和林策手机通话时间对不上，差了整整 7 分钟。法医鉴定意见的死亡时间区间宽得离谱，而且原始样本附录——不见了。`,
+    ``,
+    state.rebirth.loop > 1
+      ? `我说不清为什么，但翻开案卷的瞬间，一阵似曾相识的眩晕感涌上来。好像这些文字我读过，这条走廊我走过，这个结局——我见过。但记忆模糊得像隔着磨砂玻璃，我只确定一件事：上一次的判决是错的。`
+      : `我说不清哪里不对，但直觉告诉我，有些关键的东西被忽略了——或者被刻意隐藏了。`,
+    ``,
+    `我不能把直觉当证据。任何没有证据支撑的超前信息都会被认定为诱导证词。我只能从这三份疑点重重的材料开始，一步一步把真相挖出来。`
   ].join("\n");
 
   state.currentNarrative = prologue;
@@ -188,8 +186,8 @@ export const initializeGame = (
 };
 
 export const deriveProgress = (turn: number): Progress => {
-  const chapter = Math.floor(turn / SCENES_PER_CHAPTER) + 1;
-  const chapterTitle = CHAPTER_TITLES[(chapter - 1) % CHAPTER_TITLES.length];
+  const chapter = Math.min(Math.floor(turn / SCENES_PER_CHAPTER) + 1, CHAPTER_TITLES.length);
+  const chapterTitle = CHAPTER_TITLES[chapter - 1];
   const sceneInChapter = (turn % SCENES_PER_CHAPTER) + 1;
   return {
     chapter,
@@ -207,35 +205,50 @@ const buildChoices = (
   lastChoiceId: string
 ): Choice[] => {
   const base: Choice[] = [
-    {
-      id: "examine_evidence",
-      title: "补全证据链断点",
-      description: "逐项核对证据来源、封存记录与调取流程，修复关键缺口",
-      impactHint: "提升真相分与证据完整度"
-    },
+    // ── 法庭内行动 ──
     {
       id: "cross_examine",
       title: "诱导式交叉质证",
-      description: "不暴露先验信息，通过细节追问逼出证词矛盾",
+      description: "在法庭上不暴露先验信息，通过细节追问逼出证词矛盾",
       impactHint: "可能提升法官信任，也可能触发对抗"
-    },
-    {
-      id: "timeline_rebuild",
-      title: "重演案发十分钟",
-      description: "拼接监控、接警与法医记录，重建案发关键路径",
-      impactHint: "稳步提升证据可信度"
     },
     {
       id: "file_motion",
       title: "提出程序排异申请",
-      description: "申请排除瑕疵证据并要求检方补全原始链条",
+      description: "在法庭上申请排除瑕疵证据并要求检方补全原始链条",
       impactHint: "改变法庭态势与陪审倾向"
+    },
+    // ── 庭外调查 ──
+    {
+      id: "visit_crime_scene",
+      title: "重访江堤案发现场",
+      description: "前往青禾江堤 B 段 47 号监控点，实地勘查护栏、暗道入口和监控盲区",
+      impactHint: "可能发现物理痕迹"
+    },
+    {
+      id: "check_records",
+      title: "调取原始档案记录",
+      description: "前往急救中心或天网备份机房，比对调度日志与监控操作记录",
+      impactHint: "稳步提升证据可信度"
     },
     {
       id: "private_probe",
-      title: "追查真凶暗线",
-      description: "通过庭外线索反推利益链，寻找可入卷的新证据",
+      title: "追查利益链暗线",
+      description: "通过庭外线索反查宏泽置业工地办公室或收费站影像记录",
       impactHint: "高收益高风险"
+    },
+    // ── 人物互动 ──
+    {
+      id: "visit_defendant",
+      title: "看守所会见林策",
+      description: "前往看守所会见室，当面核实林策对案发当晚的关键细节记忆",
+      impactHint: "获取第一手线索，风险较低"
+    },
+    {
+      id: "contact_informant",
+      title: "接触调查员许岚",
+      description: "散庭后在咖啡馆与许岚碰面，试探他掌握的未入卷线索",
+      impactHint: "可能获得关键情报，但需要谨慎"
     },
     {
       id: "media_guidance",
@@ -301,7 +314,7 @@ export const maybeTriggerRebirth = (state: GameState, events: string[], statChan
     state.verdictOutlook === "misled" ||
     state.verdictOutlook === "interference";
   const fateOverflow = state.rebirth.fate >= 88;
-  const shouldRebirth = state.turn >= 12 && doomedOutlook && fateOverflow;
+  const shouldRebirth = state.turn >= 15 && doomedOutlook && fateOverflow;
 
   if (!shouldRebirth) {
     return;
@@ -381,8 +394,8 @@ export const updateMemoryBundles = (state: GameState, narrative: string, summary
 export const applyMilestones = (state: GameState, events: string[]): void => {
   const { turn, stats, flags, evidencePool, npcRelations, rebirth } = state;
 
-  // ── 里程碑 1：第 4 轮自动新增跨江收费站记录 ──
-  if (turn === 4 && !evidencePool.some((e) => e.id === "ev-toll-record")) {
+  // ── 里程碑 1：第 5 轮自动新增跨江收费站记录 ──
+  if (turn === 5 && !evidencePool.some((e) => e.id === "ev-toll-record")) {
     evidencePool.push({
       id: "ev-toll-record",
       title: "跨江收费站过闸记录",
@@ -394,9 +407,9 @@ export const applyMilestones = (state: GameState, events: string[]): void => {
     events.push("milestone_new_evidence");
   }
 
-  // ── 里程碑 2：第 7 轮后 + truthScore >= 62 → 证人反转 ──
+  // ── 里程碑 2：第 9 轮后 + truthScore >= 62 → 证人反转 ──
   if (
-    turn >= 7 &&
+    turn >= 9 &&
     stats.truthScore >= 62 &&
     !flags.keyWitnessFlipped &&
     npcRelations.keyWitness &&
@@ -427,8 +440,8 @@ export const applyMilestones = (state: GameState, events: string[]): void => {
     }
   }
 
-  // ── 里程碑 3：第 10 轮后 + evidenceIntegrity <= 42 → 伪证被采纳 ──
-  if (turn >= 10 && stats.evidenceIntegrity <= 42 && !flags.forgedEvidenceAdmitted) {
+  // ── 里程碑 3：第 14 轮后 + evidenceIntegrity <= 42 → 伪证被采纳 ──
+  if (turn >= 14 && stats.evidenceIntegrity <= 42 && !flags.forgedEvidenceAdmitted) {
     flags.forgedEvidenceAdmitted = true;
     events.push("milestone_forged_evidence");
 
@@ -451,8 +464,8 @@ export const applyMilestones = (state: GameState, events: string[]): void => {
     }
   }
 
-  // ── 里程碑 4：第 16 轮后 + publicPressure >= 74 → 外部干预暴露 ──
-  if (turn >= 16 && stats.publicPressure >= 74 && !flags.interferenceDetected) {
+  // ── 里程碑 4：第 20 轮后 + publicPressure >= 74 → 外部干预暴露 ──
+  if (turn >= 20 && stats.publicPressure >= 74 && !flags.interferenceDetected) {
     flags.interferenceDetected = true;
     events.push("milestone_interference");
 
@@ -471,6 +484,51 @@ export const applyMilestones = (state: GameState, events: string[]): void => {
       rebirth.knownTruths.push("案件存在场外力量干预");
       rebirth.knownTruths = rebirth.knownTruths.slice(-8);
     }
+  }
+
+  // ── 里程碑 5：第 15 轮 + 调查员信任 >= 65 → 许岚传递未入卷笔记 ──
+  if (
+    turn === 15 &&
+    npcRelations.investigatorXu &&
+    npcRelations.investigatorXu.trust >= 65 &&
+    !evidencePool.some((e) => e.id === "ev-xu-notes")
+  ) {
+    evidencePool.push({
+      id: "ev-xu-notes",
+      title: "许岚个人勘查笔记（未入卷）",
+      source: "调查员许岚私下提供",
+      reliability: 58,
+      status: "unverified",
+      note: "记录了办案初期被叫停的疑点：监控跳帧模式、现场第二组脚印、护栏漆面新鲜擦痕"
+    });
+    events.push("milestone_xu_notes");
+  }
+
+  // ── 里程碑 6：第 28 轮 → 自动新增郑浩然收费站记录 ──
+  if (turn === 28 && !evidencePool.some((e) => e.id === "ev-zheng-toll")) {
+    evidencePool.push({
+      id: "ev-zheng-toll",
+      title: "郑浩然名下车辆收费站过闸记录",
+      source: "跨江收费站交叉比对",
+      reliability: 71,
+      status: "unverified",
+      note: "案发当晚 23:25 经江堤附近出口离开，与约见梁蔚的时间吻合"
+    });
+    events.push("milestone_zheng_evidence");
+  }
+
+  // ── 里程碑 7：第 35 轮 + truthScore >= 70 → 检察官内部动摇 ──
+  if (
+    turn === 35 &&
+    stats.truthScore >= 70 &&
+    npcRelations.chiefProsecutor &&
+    npcRelations.chiefProsecutor.stance === "hostile"
+  ) {
+    npcRelations.chiefProsecutor.trust = clamp(npcRelations.chiefProsecutor.trust + 6, 0, 100);
+    if (npcRelations.chiefProsecutor.trust > 32) {
+      npcRelations.chiefProsecutor.stance = "neutral";
+    }
+    events.push("milestone_prosecutor_doubt");
   }
 };
 
