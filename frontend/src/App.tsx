@@ -651,8 +651,8 @@ function App() {
         </Card>
 
         <section className="grid grid-cols-12 gap-5">
-          <div className="col-span-8 grid gap-5">
-            <Card className="tech-panel border-cyan-300/25 bg-slate-950/60">
+          <div className="col-span-8 grid grid-rows-[minmax(0,1fr)_auto] gap-5">
+            <Card className="tech-panel flex min-h-0 flex-col border-cyan-300/25 bg-slate-950/60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg text-slate-100">
                   <BookOpenText className="h-5 w-5 text-cyan-300" />
@@ -660,8 +660,8 @@ function App() {
                 </CardTitle>
                 <CardDescription className="text-slate-400">SSE 流式叙事，实时显示本轮攻防进展。</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="story-scroll max-h-[470px] space-y-3 overflow-y-auto pr-1">
+              <CardContent className="min-h-0 flex-1">
+                <div className="story-scroll h-full min-h-[320px] space-y-3 overflow-y-auto pr-1">
                   {!initialized ? (
                     <article className="story-card border-dashed border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
                       点击"进入庭审"后，这里会开始输出案件叙事与法庭攻防过程。
