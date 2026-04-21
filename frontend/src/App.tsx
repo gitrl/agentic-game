@@ -763,7 +763,7 @@ function App() {
               <CardContent className="min-h-0 flex-1">
                 <div
                   ref={storyScrollRef}
-                  className="story-scroll h-[820px] max-h-[60vh] min-h-[520px] space-y-3 overflow-y-auto pr-1"
+                  className="story-scroll h-[920px] max-h-[78vh] min-h-[600px] space-y-3 overflow-y-auto pr-1"
                 >
                   {!initialized ? (
                     <article className="story-card border-dashed border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
@@ -1023,11 +1023,11 @@ function App() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <p className="text-slate-300">事件：{lastEvents.length > 0 ? lastEvents.join(" / ") : "无"}</p>
+                <p className="text-slate-300">事件：{lastEvents.length > 0 ? lastEvents.map(eventLabel).join(" / ") : "无"}</p>
                 <ul className="list-disc space-y-1 pl-4 text-slate-300">
                   {lastStatChanges.length === 0 ? <li>暂无变化</li> : null}
                   {lastStatChanges.map((change) => (
-                    <li key={change}>{change}</li>
+                    <li key={change}>{statChangeLabel(change)}</li>
                   ))}
                 </ul>
                 {lastTokenUsage ? (
@@ -1282,6 +1282,79 @@ const stanceLabel = (stance: NpcRelation["stance"]): string => {
     return "对立";
   }
   return "观望";
+};
+
+const eventLabel = (slug: string): string => {
+  const map: Record<string, string> = {
+    rebirth_triggered: "重生触发",
+    milestone_new_evidence: "新证据·跨江收费站记录",
+    milestone_witness_flip: "关键证人立场反转",
+    milestone_forged_evidence: "伪证被采纳",
+    milestone_interference: "外部干预暴露",
+    milestone_xu_notes: "许岚私人笔记浮出",
+    milestone_zheng_evidence: "郑浩然过闸记录浮出",
+    milestone_prosecutor_doubt: "检察官内心动摇",
+    game_over: "终局宣判"
+  };
+  return map[slug] ?? slug;
+};
+
+const STAT_KEY_CN: Record<string, string> = {
+  truth_score: "真相分",
+  judge_trust: "法官信任",
+  jury_bias: "陪审偏置",
+  public_pressure: "公众压力",
+  evidence_integrity: "证据完整度",
+  key_witness_trust: "关键证人信任",
+  fate: "命运阻力"
+};
+
+const FLAG_FLIP_CN: Record<string, string> = {
+  key_witness_flipped: "关键证人立场反转",
+  forged_evidence_admitted: "伪证已入卷",
+  interference_detected: "外部干预已暴露"
+};
+
+const EVIDENCE_STATUS_CN: Record<string, string> = {
+  unverified: "待核验",
+  verified: "已核验",
+  challenged: "争议中"
+};
+
+const statChangeLabel = (raw: string): string => {
+  const flagMatch = raw.match(/^([a-z_]+):\s*false\s*->\s*true$/);
+  if (flagMatch && FLAG_FLIP_CN[flagMatch[1]]) {
+    return FLAG_FLIP_CN[flagMatch[1]];
+  }
+
+  const evidenceStatus = raw.match(/^evidence_status:\s*(\w+)\s*->\s*(\w+)$/);
+  if (evidenceStatus) {
+    const from = EVIDENCE_STATUS_CN[evidenceStatus[1]] ?? evidenceStatus[1];
+    const to = EVIDENCE_STATUS_CN[evidenceStatus[2]] ?? evidenceStatus[2];
+    return `证据状态：${from} → ${to}`;
+  }
+
+  const memRet = raw.match(/^memory_retention\s+(\d+)%\s*->\s*(\d+)%$/);
+  if (memRet) {
+    return `记忆保留 ${memRet[1]}% → ${memRet[2]}%`;
+  }
+
+  const knownTruths = raw.match(/^known_truths\s+(\d+)\s*->\s*(\d+)$/);
+  if (knownTruths) {
+    return `已知真相 ${knownTruths[1]} → ${knownTruths[2]} 条`;
+  }
+
+  const loopMatch = raw.match(/^loop\s+\+(\d+)$/);
+  if (loopMatch) {
+    return `进入下一周目 (+${loopMatch[1]})`;
+  }
+
+  const deltaMatch = raw.match(/^([a-z_]+)\s+([+-]\d+)$/);
+  if (deltaMatch && STAT_KEY_CN[deltaMatch[1]]) {
+    return `${STAT_KEY_CN[deltaMatch[1]]} ${deltaMatch[2]}`;
+  }
+
+  return raw;
 };
 
 const readApiError = async (res: Response, fallback: string): Promise<string> => {
