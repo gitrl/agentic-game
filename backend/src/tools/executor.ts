@@ -155,6 +155,15 @@ function handleShiftNpcRelation(state: GameState, args: ShiftNpcRelationArgs) {
   };
 }
 
+export type SubmitSummaryArgs = {
+  summary: string;
+};
+
+function handleSubmitSummary(args: SubmitSummaryArgs) {
+  const summary = (args.summary || "").slice(0, 80).trim();
+  return { stored: Boolean(summary), summary };
+}
+
 export type WriteMemoryAnchorArgs = {
   anchor: string;
 };
@@ -210,6 +219,9 @@ export function executeToolCall(
       break;
     case "shift_npc_relation":
       result = handleShiftNpcRelation(state, args as unknown as ShiftNpcRelationArgs);
+      break;
+    case "submit_summary":
+      result = handleSubmitSummary(args as unknown as SubmitSummaryArgs);
       break;
     case "write_memory_anchor":
       result = handleWriteMemoryAnchor(state, args as unknown as WriteMemoryAnchorArgs);

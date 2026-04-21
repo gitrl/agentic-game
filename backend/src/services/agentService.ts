@@ -1,11 +1,5 @@
 import OpenAI from "openai";
-import type {
-  GameState,
-  ActionResult,
-  InputFeedback,
-  TokenUsage,
-  Choice
-} from "../types/game.js";
+import type { GameState, InputFeedback, TokenUsage } from "../types/game.js";
 import { readLlmConfig, type LlmConfig } from "../config/llmConfig.js";
 import { AGENT_SYSTEM_PROMPT } from "../prompts/agentSystemPrompt.js";
 import { WORLD_CONTEXT } from "../prompts/worldContext.js";
@@ -21,6 +15,10 @@ type AgentTurnResult = {
   toolCalls: ToolCallRecord[];
   tokenUsage: TokenUsage;
   inputFeedback: InputFeedback;
+};
+
+export type AgentStreamOptions = {
+  onNarrativeDelta?: (text: string) => void;
 };
 
 const MAX_TOOL_ROUNDS = 3;
@@ -49,23 +47,32 @@ export class AgentService {
 
   async processTurn(
     state: GameState,
-    playerAction: { choiceId?: string; userInput?: string }
+    playerAction: { choiceId?: string; userInput?: string },
+    options?: AgentStreamOptions
   ): Promise<AgentTurnResult> {
-    // 解析/验证失败时自动重试 1 次
+    // 解析/验证失败时自动重试 1 次（仅在尚未流式输出任何内容时才安全重试）
+    let streamed = false;
+    const wrappedOptions: AgentStreamOptions = {
+      onNarrativeDelta: (text: string) => {
+        streamed = true;
+        options?.onNarrativeDelta?.(text);
+      }
+    };
     try {
-      return await this.executeAgentLoop(state, playerAction);
+      return await this.executeAgentLoop(state, playerAction, wrappedOptions);
     } catch (error) {
       const code = error instanceof AppError ? error.code : "";
-      const retryable = ["LLM_NO_NARRATIVE", "LLM_INVALID_NARRATIVE", "LLM_MISSING_TOOL"].includes(code);
+      const retryable = !streamed && ["LLM_NO_NARRATIVE", "LLM_MISSING_TOOL"].includes(code);
       if (!retryable) throw error;
       console.warn(`[AgentService] ${code}，自动重试 1 次...`);
-      return await this.executeAgentLoop(state, playerAction);
+      return await this.executeAgentLoop(state, playerAction, options);
     }
   }
 
   private async executeAgentLoop(
     state: GameState,
-    playerAction: { choiceId?: string; userInput?: string }
+    playerAction: { choiceId?: string; userInput?: string },
+    options?: AgentStreamOptions
   ): Promise<AgentTurnResult> {
     const memoryContext = await readMemoryFile(state.sessionId);
     const userMessage = this.buildUserContext(state, playerAction, memoryContext);
@@ -82,80 +89,139 @@ export class AgentService {
     let totalCompletionTokens = 0;
     let finalContent = "";
 
-    // Tool-calling loop: keep rounds low to reduce latency
+    // Tool-calling loop (流式): 每轮开 stream:true，tool_calls 增量累积，content 增量转发
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      let completion: OpenAI.ChatCompletion;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let stream: AsyncIterable<any>;
       try {
-        completion = await (this.client.chat.completions.create as Function)({
+        stream = (await (this.client.chat.completions.create as Function)({
           model: this.config.model,
           temperature: this.config.temperature,
           messages,
           tools: toolsForTurn,
           tool_choice: "auto",
           enable_thinking: this.config.thinkingEnabled,
-          thinking_budget: this.config.thinkingBudget
-        }) as OpenAI.ChatCompletion;
+          thinking_budget: this.config.thinkingBudget,
+          stream: true,
+          stream_options: { include_usage: true }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        })) as AsyncIterable<any>;
       } catch (error) {
         const msg = error instanceof Error ? error.message : "未知错误";
         throw new AppError(502, `AI 服务调用失败: ${msg}，请重试。`, "LLM_ERROR");
       }
 
+      // 本轮累积
+      type ToolCallAcc = { id?: string; name?: string; args: string };
+      const toolCallsAcc = new Map<number, ToolCallAcc>();
+      let roundContent = "";
+      let finishReason: string | null = null;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const usage = completion.usage as any;
-      const cachedTokens: number = usage?.prompt_tokens_details?.cached_tokens ?? 0;
-      totalPromptTokens += (usage?.prompt_tokens ?? 0) - cachedTokens;
-      totalCachedTokens += cachedTokens;
-      totalCompletionTokens += usage?.completion_tokens ?? 0;
+      let roundUsage: any = null;
 
-      const choice = completion.choices[0];
-      if (!choice) {
-        throw new AppError(502, "AI 服务返回为空，请重试。", "LLM_EMPTY_RESPONSE");
+      try {
+        for await (const chunk of stream) {
+          const choice = chunk.choices?.[0];
+          if (choice) {
+            const delta = choice.delta;
+            if (delta?.content) {
+              roundContent += delta.content;
+              // 直接流式转发 content delta 给前端（哪怕本轮有 tool_calls 也一起发——
+              // qwen 常会在同一轮内并行产出 narrative 文本和 tool_calls，不能过滤掉）
+              options?.onNarrativeDelta?.(delta.content);
+            }
+            if (delta?.tool_calls && Array.isArray(delta.tool_calls)) {
+              for (const tc of delta.tool_calls) {
+                const idx: number = tc.index ?? 0;
+                let acc = toolCallsAcc.get(idx);
+                if (!acc) {
+                  acc = { id: tc.id, name: tc.function?.name, args: "" };
+                  toolCallsAcc.set(idx, acc);
+                } else {
+                  if (tc.id) acc.id = tc.id;
+                  if (tc.function?.name) acc.name = tc.function.name;
+                }
+                if (tc.function?.arguments) acc.args += tc.function.arguments;
+              }
+            }
+            if (choice.finish_reason) {
+              finishReason = choice.finish_reason;
+            }
+          }
+          if (chunk.usage) {
+            roundUsage = chunk.usage;
+          }
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : "未知错误";
+        throw new AppError(502, `AI 流式响应中断: ${msg}，请重试。`, "LLM_ERROR");
       }
 
-      const assistantMsg = choice.message;
-
-      // Collect any content
-      if (assistantMsg.content) {
-        finalContent += assistantMsg.content;
+      if (roundUsage) {
+        const cachedTokens: number = roundUsage.prompt_tokens_details?.cached_tokens ?? 0;
+        totalPromptTokens += (roundUsage.prompt_tokens ?? 0) - cachedTokens;
+        totalCachedTokens += cachedTokens;
+        totalCompletionTokens += roundUsage.completion_tokens ?? 0;
       }
 
-      // If no tool calls, we're done
-      if (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) {
+      // 如果是纯叙事轮（无工具调用），content 已全部转发，本轮结束
+      if (toolCallsAcc.size === 0) {
+        finalContent += roundContent;
         break;
       }
 
-      // Execute tool calls
-      messages.push(assistantMsg);
+      // 构造含 tool_calls 的 assistant message 写回对话历史
+      const assistantToolCalls = Array.from(toolCallsAcc.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([, tc]) => ({
+          id: tc.id ?? "",
+          type: "function" as const,
+          function: {
+            name: tc.name ?? "",
+            arguments: tc.args || "{}"
+          }
+        }));
 
-      for (const toolCall of assistantMsg.tool_calls) {
-        const record = executeToolCall(
-          toolCall.function.name,
-          toolCall.function.arguments,
-          state
-        );
+      messages.push({
+        role: "assistant",
+        content: roundContent || null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tool_calls: assistantToolCalls as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      // 执行工具调用
+      for (const tc of assistantToolCalls) {
+        const record = executeToolCall(tc.function.name, tc.function.arguments, state);
         allToolCalls.push(record);
-
         messages.push({
           role: "tool",
-          tool_call_id: toolCall.id,
+          tool_call_id: tc.id,
           content: JSON.stringify(summarizeToolResult(record))
         });
       }
 
-      // If finish_reason is "stop", we're done even if there were tool calls
-      if (choice.finish_reason === "stop") {
+      // 罕见情况：同一轮 finish_reason=stop 且也有 tool_calls，视为结束
+      if (finishReason === "stop") {
+        finalContent += roundContent;
         break;
       }
     }
 
-    // Parse narrative from final content
-    const { narrative, summary } = this.parseNarrativeResponse(finalContent);
+    // narrative 现在是纯文本（非 JSON），summary 走 submit_summary 工具
+    const narrative = finalContent.trim();
+    if (!narrative) {
+      throw new AppError(502, "AI 未返回叙事内容，请重试。", "LLM_NO_NARRATIVE");
+    }
 
     // Build input feedback from resolve_player_input tool call if present
     const inputFeedback = this.buildInputFeedback(playerAction, allToolCalls, state);
 
-    // Validate required tool calls
+    // Validate required tool calls（包含 submit_summary）
     this.validateRequiredTools(allToolCalls);
+
+    // 从 submit_summary 工具调用中取出 summary
+    const summary = this.extractSummary(allToolCalls) ?? narrative.slice(0, 40);
 
     return {
       narrative,
@@ -168,6 +234,13 @@ export class AgentService {
       },
       inputFeedback
     };
+  }
+
+  private extractSummary(toolCalls: ToolCallRecord[]): string | null {
+    const rec = toolCalls.find((tc) => tc.name === "submit_summary");
+    if (!rec) return null;
+    const res = rec.result as { summary?: string };
+    return res?.summary?.trim() || null;
   }
 
   private buildUserContext(
@@ -274,43 +347,6 @@ export class AgentService {
     return { chapter, chapterTitle, sceneInChapter, maxScenesInChapter: SCENES_PER_CHAPTER };
   }
 
-  private parseNarrativeResponse(content: string): { narrative: string; summary: string } {
-    if (!content.trim()) {
-      throw new AppError(502, "AI 未返回叙事内容，请重试。", "LLM_NO_NARRATIVE");
-    }
-
-    // Try to parse as JSON
-    try {
-      const parsed = JSON.parse(content.trim()) as { narrative?: string; summary?: string };
-      if (parsed.narrative && parsed.summary) {
-        return {
-          narrative: parsed.narrative.slice(0, 800),
-          summary: parsed.summary.slice(0, 80)
-        };
-      }
-    } catch {
-      // Not JSON — try to extract from text
-    }
-
-    // Try to find JSON embedded in text
-    const jsonMatch = content.match(/\{[\s\S]*"narrative"[\s\S]*"summary"[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]) as { narrative?: string; summary?: string };
-        if (parsed.narrative && parsed.summary) {
-          return {
-            narrative: parsed.narrative.slice(0, 800),
-            summary: parsed.summary.slice(0, 80)
-          };
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    throw new AppError(502, "AI 返回的叙事格式无效，请重试。", "LLM_INVALID_NARRATIVE");
-  }
-
   private buildInputFeedback(
     playerAction: { choiceId?: string; userInput?: string },
     toolCalls: ToolCallRecord[],
@@ -372,6 +408,9 @@ export class AgentService {
     if (!calledNames.has("generate_choices")) {
       throw new AppError(502, "AI 未调用 generate_choices 工具，请重试。", "LLM_MISSING_TOOL");
     }
+    if (!calledNames.has("submit_summary")) {
+      throw new AppError(502, "AI 未调用 submit_summary 工具，请重试。", "LLM_MISSING_TOOL");
+    }
   }
 }
 
@@ -401,6 +440,8 @@ function summarizeToolResult(record: ToolCallRecord): unknown {
       return { ok: true, action: result.action ?? null, evidenceId: (result.evidence as { id?: string } | undefined)?.id ?? null };
     case "shift_npc_relation":
       return { ok: true, npcId: result.npcId ?? null, trustAfter: result.trustAfter ?? null };
+    case "submit_summary":
+      return { ok: result.stored ?? false };
     case "write_memory_anchor":
       return { ok: result.stored ?? false, total: result.total ?? null };
     default:

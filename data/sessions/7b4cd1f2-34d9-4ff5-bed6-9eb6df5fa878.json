@@ -1,0 +1,150 @@
+{
+  "sessionId": "7b4cd1f2-34d9-4ff5-bed6-9eb6df5fa878",
+  "initialized": true,
+  "turn": 1,
+  "progress": {
+    "chapter": 1,
+    "chapterTitle": "回溯醒来",
+    "sceneInChapter": 2,
+    "maxScenesInChapter": 10
+  },
+  "player": {
+    "name": "沈言",
+    "role": "辩护律师",
+    "talent": "交叉质证",
+    "starterItem": "案卷标注笔"
+  },
+  "stats": {
+    "truthScore": 51,
+    "judgeTrust": 52,
+    "juryBias": -2,
+    "publicPressure": 40,
+    "evidenceIntegrity": 50
+  },
+  "flags": {
+    "keyWitnessFlipped": false,
+    "forgedEvidenceAdmitted": false,
+    "interferenceDetected": false
+  },
+  "evidencePool": [
+    {
+      "id": "ev-river-cam-raw",
+      "title": "江堤监控原始码流",
+      "source": "市政天网备份磁带",
+      "reliability": 56,
+      "status": "unverified",
+      "note": "案发前 14 分钟出现 43 秒黑屏，帧序列存在跳变"
+    },
+    {
+      "id": "ev-emergency-call",
+      "title": "120 接警与调度录音",
+      "source": "急救中心调度台",
+      "reliability": 52,
+      "status": "unverified",
+      "note": "首通报警时间与警方到场记录存在 7 分钟错位"
+    },
+    {
+      "id": "ev-forensic-opinion",
+      "title": "首轮法医鉴定意见",
+      "source": "司法鉴定所",
+      "reliability": 44,
+      "status": "challenged",
+      "note": "死亡时刻区间过宽，且关键体征推断缺乏原始样本附录"
+    }
+  ],
+  "npcRelations": {
+    "chiefProsecutor": {
+      "trust": 29,
+      "stance": "hostile"
+    },
+    "presidingJudge": {
+      "trust": 52,
+      "stance": "neutral"
+    },
+    "keyWitness": {
+      "trust": 35,
+      "stance": "neutral"
+    },
+    "investigatorXu": {
+      "trust": 55,
+      "stance": "ally"
+    }
+  },
+  "verdictOutlook": "undetermined",
+  "currentNarrative": "走出法院大门时，手机震动了一下。是一条未知号码的短信，只有七个字：\n\n\"别查监控维修记录。\"\n\n我停下脚步，抬头看向街对面的监控探头。它正对着法院门口，红灯闪烁，像一只沉默的眼睛。",
+  "currentChoices": [
+    {
+      "id": "visit_defendant",
+      "title": "看守所会见林策",
+      "description": "前往市第一看守所会见室，听取林策对案发当晚的第一手叙述",
+      "impactHint": "获取被告视角，风险较低"
+    },
+    {
+      "id": "check_emergency_records",
+      "title": "核查急救中心调度日志",
+      "description": "前往青禾市 120 急救指挥中心，调取原始接警时间戳与调度员值班记录",
+      "impactHint": "可能发现时间错位原因，需正式手续"
+    },
+    {
+      "id": "probe_witness privately",
+      "title": "接触证人廖盈舟",
+      "description": "在法院后巷咖啡馆尝试与廖盈舟非正式交谈，观察其态度",
+      "impactHint": "高风险，可能激怒检方"
+    },
+    {
+      "id": "inspect_scene",
+      "title": "实地勘查江堤现场",
+      "description": "前往江堤 B 段 47 号监控点附近，验证盲区与暗道入口的物理条件",
+      "impactHint": "可能获得新线索，但会暴露调查方向"
+    }
+  ],
+  "historySummaries": [
+    "序章：案件进入实质审理，案卷中存在多处异常。",
+    "当庭提出监控证据程序异议，法官记录在案，检方被迫应对"
+  ],
+  "memory": {
+    "shortWindow": [
+      "走进青禾中院第一庭的时候，走廊尽头的日光灯正好闪了一下。\n\n我叫沈言。案卷摊在桌上，案卷标注笔压住翻起的页角。被告席上坐着林策，二十七岁，网约车司机——检方以故意杀人罪起诉他，说他在江堤把一个叫梁蔚的女人推下了护栏。\n\n梁蔚，三十一岁，青禾市审计局的重点项目审计员。检方说林策在 23:34 与她发生冲突，之后伪造报警时间、清理车内痕迹。证据链看起来很完整，公诉人周锐鸣显然志在必得。\n\n但案卷里有些东西不对。江堤监控在 23:34 出现了 43 秒的黑屏。120 接警记录和林策手机通话时间对不上，差了整整 7 分钟。法医鉴定意见的死亡时间区间宽得离谱，而且原始样本附录——不见了。\n\n我说不清哪里不对，但直觉告诉我，有些关键的东西被忽略了——或者被刻意隐藏了。\n\n我不能把直觉当证据。任何没有证据支撑的超前信息都会被认定为诱导证词。我只能从这三份疑点重重的材料开始，一步一步把真相挖出来。",
+      "走出法院大门时，手机震动了一下。是一条未知号码的短信，只有七个字：\n\n\"别查监控维修记录。\"\n\n我停下脚步，抬头看向街对面的监控探头。它正对着法院门口，红灯闪烁，像一只沉默的眼睛。"
+    ],
+    "midSummary": [
+      "前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。"
+    ],
+    "longAnchors": [
+      "上一世的判决是错的，但我无法直接说出理由"
+    ]
+  },
+  "rebirth": {
+    "loop": 1,
+    "memoryRetention": 0.6,
+    "knownTruths": [
+      "上一世的判决是错的"
+    ],
+    "fate": 51
+  },
+  "replay": [
+    {
+      "turn": 1,
+      "playerAction": "file_motion",
+      "narrativeSummary": "当庭提出监控证据程序异议，法官记录在案，检方被迫应对",
+      "statChanges": [
+        "truth_score +1",
+        "judge_trust +2",
+        "jury_bias -2",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 19500,
+        "cachedInputTokens": 0,
+        "outputTokens": 852
+      },
+      "timestamp": "2026-04-21T04:09:23.826Z"
+    }
+  ],
+  "gameOver": false,
+  "endingType": null,
+  "endingNarrative": "",
+  "lastChoiceId": "",
+  "maxRevealedChapter": 1
+}

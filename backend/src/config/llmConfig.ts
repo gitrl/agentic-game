@@ -29,8 +29,8 @@ export const readLlmConfig = (): LlmConfig => {
       "https://dashscope.aliyuncs.com/compatible-mode/v1",
     model: process.env.OPENAI_MODEL?.trim() || "qwen3.5-plus",
     temperature: toNumber(process.env.OPENAI_TEMPERATURE, 0.7),
-    thinkingEnabled: toBoolean(process.env.OPENAI_ENABLE_THINKING, true),
-    thinkingBudget: toNumber(process.env.OPENAI_THINKING_BUDGET, 256),
+    thinkingEnabled: toBoolean(process.env.OPENAI_ENABLE_THINKING, false),
+    thinkingBudget: toNumber(process.env.OPENAI_THINKING_BUDGET, 64),
     timeoutMs: toNumber(process.env.OPENAI_TIMEOUT_MS, 30000)
   };
 };

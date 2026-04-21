@@ -98,13 +98,16 @@ function App() {
   const [name, setName] = useState("沈言");
   const [actionInput, setActionInput] = useState("");
 
-  const [storyFeed, setStoryFeed] = useState<string[]>([]);
+  type StoryEntry = { narrative: string; summary?: string };
+  const [storyFeed, setStoryFeed] = useState<StoryEntry[]>([]);
   const [streamingText, setStreamingText] = useState("");
+  const [latestSummary, setLatestSummary] = useState<string>("");
   const streamingRef = useRef("");
   const chunkQueueRef = useRef("");
   const playbackTimerRef = useRef<number | null>(null);
   const pendingDoneSummaryRef = useRef<string | null>(null);
   const sessionIdRef = useRef("");
+  const storyScrollRef = useRef<HTMLDivElement>(null);
 
   const [choices, setChoices] = useState<Choice[]>([]);
   const [turn, setTurn] = useState(0);
@@ -162,7 +165,10 @@ function App() {
   const finalizeTurnStream = (summary?: string) => {
     const completedNarrative = streamingRef.current;
     if (completedNarrative.trim()) {
-      setStoryFeed((prev) => [...prev, completedNarrative]);
+      setStoryFeed((prev) => [...prev, { narrative: completedNarrative, summary }]);
+    }
+    if (summary?.trim()) {
+      setLatestSummary(summary.trim());
     }
     streamingRef.current = "";
     setStreamingText("");
@@ -186,9 +192,11 @@ function App() {
         return;
       }
 
-      const nextChar = chunkQueueRef.current[0];
-      chunkQueueRef.current = chunkQueueRef.current.slice(1);
-      streamingRef.current += nextChar;
+      // 后端已真流式输出，前端打字机仅用于平滑展示 — 每 tick 吐 2 个字，近似 LLM 真实速率
+      const take = Math.min(2, chunkQueueRef.current.length);
+      const nextChars = chunkQueueRef.current.slice(0, take);
+      chunkQueueRef.current = chunkQueueRef.current.slice(take);
+      streamingRef.current += nextChars;
       setStreamingText(streamingRef.current);
     }, 16);
   };
@@ -206,6 +214,13 @@ function App() {
       stopPlayback();
     };
   }, []);
+
+  // 每次新内容到达时自动滚动到底部（流式打字 / 新卡片 / 摘要更新）
+  useEffect(() => {
+    const el = storyScrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [streamingText, storyFeed, latestSummary]);
 
   // P2：页面加载时尝试从 localStorage 恢复上次会话
   useEffect(() => {
@@ -231,7 +246,10 @@ function App() {
         setSessionId(savedId);
         setInitialized(true);
         setName(state.player?.name ?? "沈言");
-        setStoryFeed(["[已自动恢复上次会话进度]", state.currentNarrative]);
+        setStoryFeed([
+          { narrative: "[已自动恢复上次会话进度]" },
+          { narrative: state.currentNarrative }
+        ]);
         setChoices(state.currentChoices);
         setProgress(state.progress);
         setStats(state.stats);
@@ -274,6 +292,7 @@ function App() {
   const resetForInit = () => {
     setStoryFeed([]);
     setStreamingText("");
+    setLatestSummary("");
     streamingRef.current = "";
     setActionInput("");
     setInputFeedback(null);
@@ -319,7 +338,8 @@ function App() {
       const data = (await res.json()) as InitResponse;
       setActiveSessionId(data.sessionId || id);
       setInitialized(true);
-      setStoryFeed([data.narrative]);
+      setStoryFeed([{ narrative: data.narrative }]);
+      setLatestSummary("");
       setChoices(data.choices);
       setProgress(data.progress);
       setStats(data.stats);
@@ -577,7 +597,11 @@ function App() {
       const state = (await stateRes.json()) as GameStateResponse;
 
       setInitialized(state.initialized);
-      setStoryFeed([`[已加载存档 ${saveIdInput.trim()}]`, state.currentNarrative]);
+      setStoryFeed([
+        { narrative: `[已加载存档 ${saveIdInput.trim()}]` },
+        { narrative: state.currentNarrative }
+      ]);
+      setLatestSummary("");
       setChoices(state.currentChoices);
       setProgress(state.progress);
       setStats(state.stats);
@@ -651,7 +675,7 @@ function App() {
         </Card>
 
         <section className="grid grid-cols-12 gap-5">
-          <div className="col-span-8 grid grid-rows-[minmax(0,1fr)_auto] gap-5">
+          <div className="col-span-8 space-y-5">
             <Card className="tech-panel flex min-h-0 flex-col border-cyan-300/25 bg-slate-950/60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg text-slate-100">
@@ -659,9 +683,18 @@ function App() {
                   庭审记录流
                 </CardTitle>
                 <CardDescription className="text-slate-400">SSE 流式叙事，实时显示本轮攻防进展。</CardDescription>
+                {latestSummary ? (
+                  <div className="mt-3 flex items-start gap-2 rounded-md border border-cyan-300/45 bg-cyan-500/15 px-3 py-2 text-sm text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.12)]">
+                    <span className="shrink-0 rounded-sm bg-cyan-500/30 px-1.5 py-0.5 text-[11px] font-semibold tracking-widest text-cyan-100">本轮摘要</span>
+                    <span className="leading-relaxed">{latestSummary}</span>
+                  </div>
+                ) : null}
               </CardHeader>
               <CardContent className="min-h-0 flex-1">
-                <div className="story-scroll h-full min-h-[320px] space-y-3 overflow-y-auto pr-1">
+                <div
+                  ref={storyScrollRef}
+                  className="story-scroll h-[520px] max-h-[60vh] min-h-[320px] space-y-3 overflow-y-auto pr-1"
+                >
                   {!initialized ? (
                     <article className="story-card border-dashed border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
                       点击"进入庭审"后，这里会开始输出案件叙事与法庭攻防过程。
@@ -669,8 +702,17 @@ function App() {
                   ) : null}
 
                   {storyFeed.map((item, index) => (
-                    <article key={`${index}-${item.slice(0, 8)}`} className="story-card text-slate-100">
-                      <p className="whitespace-pre-line">{item}</p>
+                    <article
+                      key={`${index}-${item.narrative.slice(0, 8)}`}
+                      className="story-card text-slate-100"
+                    >
+                      {item.summary ? (
+                        <div className="mb-2 flex items-start gap-2 rounded-md border border-cyan-300/35 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100">
+                          <span className="shrink-0 font-semibold tracking-widest text-cyan-300/90">摘要</span>
+                          <span className="leading-relaxed">{item.summary}</span>
+                        </div>
+                      ) : null}
+                      <p className="whitespace-pre-line">{item.narrative}</p>
                     </article>
                   ))}
 
@@ -729,8 +771,7 @@ function App() {
                   >
                     <p>
                       系统识别：{inputFeedback.resolvedChoiceTitle}（置信度{" "}
-                      {Math.round(inputFeedback.confidence * 100)}%）
-                    </p>
+                      {Math.round(inputFeedback.confidence * 100)}%</p>
                     <p className="mt-1 text-[11px] opacity-90">{inputFeedback.reason}</p>
                   </div>
                 ) : null}

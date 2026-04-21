@@ -195,6 +195,23 @@ export const TOOL_DEFINITIONS: Tool[] = [
   {
     type: "function",
     function: {
+      name: "submit_summary",
+      description: "提交本轮一句话摘要（中文，<=40字），用于回放与前端展示。每轮必调一次。",
+      parameters: {
+        type: "object",
+        properties: {
+          summary: {
+            type: "string",
+            description: "一句话摘要（中文，<=40字）"
+          }
+        },
+        required: ["summary"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "write_memory_anchor",
       description: "写入长期记忆锚点（仅关键事件）。",
       parameters: {

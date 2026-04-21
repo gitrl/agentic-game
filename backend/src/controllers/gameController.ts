@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../core/errors.js";
 import type { GameService } from "../services/gameService.js";
-import { delay, sendSseEvent, setupSse, splitNarrative } from "../utils/sse.js";
+import { sendSseEvent, setupSse } from "../utils/sse.js";
 
 export const createGameController = (gameService: GameService) => {
   const health = (_req: Request, res: Response) => {
@@ -48,30 +48,26 @@ export const createGameController = (gameService: GameService) => {
 
     sendSseEvent(res, "status", { message: "已接收行动，正在处理..." });
 
+    // 先发 input_feedback 占位：真流式下 inputFeedback 会在 turn 结束后才有完整内容
+    // 但 narrative_delta 要能边生成边转发，所以这里不能等 inputFeedback
+    // 做法：先让 narrative_delta 流出去，input_feedback 在最后一起发（前端已能容忍顺序）
     try {
-      const { result, inputFeedback } = await gameService.processTurn(sessionId, {
-        choiceId,
-        userInput
-      });
-
-      if (closed) {
-        return;
-      }
-
-      const chunks = splitNarrative(result.narrative, 34);
-      sendSseEvent(res, "input_feedback", inputFeedback);
-      for (const chunk of chunks) {
-        if (closed) {
-          return;
+      const { result, inputFeedback } = await gameService.processTurn(
+        sessionId,
+        { choiceId, userInput },
+        {
+          onNarrativeDelta: (text: string) => {
+            if (closed) return;
+            sendSseEvent(res, "narrative_delta", { text });
+          }
         }
-        sendSseEvent(res, "narrative_delta", { text: chunk });
-        await delay(80);
-      }
+      );
 
       if (closed) {
         return;
       }
 
+      sendSseEvent(res, "input_feedback", inputFeedback);
       sendSseEvent(res, "choices", { choices: result.choices });
       sendSseEvent(res, "state_patch", {
         turn: result.turn,

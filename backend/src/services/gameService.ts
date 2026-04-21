@@ -52,7 +52,8 @@ export class GameService {
 
   async processTurn(
     sessionId: string,
-    payload: ActionPayload
+    payload: ActionPayload,
+    options?: { onNarrativeDelta?: (text: string) => void }
   ): Promise<{ result: ActionResult; inputFeedback: InputFeedback }> {
     const state = await this.requireSession(sessionId);
 
@@ -81,10 +82,11 @@ export class GameService {
 
     // Call the Agent (LLM with tools) — this is the core agentic flow
     // LLM decides: narrative, stat changes, choices, evidence, NPC, memory
-    const agentResult = await this.agentService.processTurn(state, {
-      choiceId: payload.choiceId,
-      userInput: payload.userInput
-    });
+    const agentResult = await this.agentService.processTurn(
+      state,
+      { choiceId: payload.choiceId, userInput: payload.userInput },
+      { onNarrativeDelta: options?.onNarrativeDelta }
+    );
 
     // Post-processing: code-enforced game rules
     const events: string[] = [];
