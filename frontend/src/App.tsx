@@ -3,6 +3,7 @@ import {
   Activity,
   BookOpenText,
   BrainCircuit,
+  ChevronDown,
   Cpu,
   Database,
   Gavel,
@@ -98,16 +99,52 @@ function App() {
   const [name, setName] = useState("沈言");
   const [actionInput, setActionInput] = useState("");
 
-  type StoryEntry = { narrative: string; summary?: string };
+  type ActionSource = "choice" | "input" | "intro";
+  type PendingAction = {
+    action: string;
+    source: "choice" | "input";
+    resolvedTitle?: string;
+    resolvedConfidence?: number;
+    fallbackUsed?: boolean;
+  };
+  type StoryEntry = {
+    narrative: string;
+    summary?: string;
+    playerAction?: string;
+    actionSource?: ActionSource;
+    resolvedTitle?: string;
+    resolvedConfidence?: number;
+    fallbackUsed?: boolean;
+    introLabel?: string;
+  };
   const [storyFeed, setStoryFeed] = useState<StoryEntry[]>([]);
   const [streamingText, setStreamingText] = useState("");
-  const [latestSummary, setLatestSummary] = useState<string>("");
+  const [collapsedIndices, setCollapsedIndices] = useState<Set<number>>(() => new Set());
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const pendingActionRef = useRef<PendingAction | null>(null);
   const streamingRef = useRef("");
   const chunkQueueRef = useRef("");
   const playbackTimerRef = useRef<number | null>(null);
   const pendingDoneSummaryRef = useRef<string | null>(null);
   const sessionIdRef = useRef("");
   const storyScrollRef = useRef<HTMLDivElement>(null);
+
+  const updatePendingAction = (next: PendingAction | null) => {
+    pendingActionRef.current = next;
+    setPendingAction(next);
+  };
+
+  const toggleCollapsed = (index: number) => {
+    setCollapsedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
 
   const [choices, setChoices] = useState<Choice[]>([]);
   const [turn, setTurn] = useState(0);
@@ -122,7 +159,6 @@ function App() {
   const [lastStatChanges, setLastStatChanges] = useState<string[]>([]);
   const [lastEvents, setLastEvents] = useState<string[]>([]);
   const [lastTokenUsage, setLastTokenUsage] = useState<TokenUsage | null>(null);
-  const [inputFeedback, setInputFeedback] = useState<InputFeedback | null>(null);
 
   const [saveIdInput, setSaveIdInput] = useState("");
   const [latestSaveId, setLatestSaveId] = useState("");
@@ -164,12 +200,34 @@ function App() {
 
   const finalizeTurnStream = (summary?: string) => {
     const completedNarrative = streamingRef.current;
+    const pending = pendingActionRef.current;
     if (completedNarrative.trim()) {
-      setStoryFeed((prev) => [...prev, { narrative: completedNarrative, summary }]);
+      setStoryFeed((prev) => {
+        // 新回合开始时，把刚成为"旧一轮"的条目加入折叠集合
+        if (prev.length > 0) {
+          const lastIndex = prev.length - 1;
+          setCollapsedIndices((set) => {
+            if (set.has(lastIndex)) return set;
+            const next = new Set(set);
+            next.add(lastIndex);
+            return next;
+          });
+        }
+        return [
+          ...prev,
+          {
+            narrative: completedNarrative,
+            summary,
+            playerAction: pending?.action,
+            actionSource: pending?.source,
+            resolvedTitle: pending?.resolvedTitle,
+            resolvedConfidence: pending?.resolvedConfidence,
+            fallbackUsed: pending?.fallbackUsed
+          }
+        ];
+      });
     }
-    if (summary?.trim()) {
-      setLatestSummary(summary.trim());
-    }
+    updatePendingAction(null);
     streamingRef.current = "";
     setStreamingText("");
     setStatus(summary ?? "回合完成");
@@ -215,12 +273,12 @@ function App() {
     };
   }, []);
 
-  // 每次新内容到达时自动滚动到底部（流式打字 / 新卡片 / 摘要更新）
+  // 每次新内容到达时自动滚动到底部（流式打字 / 新卡片）
   useEffect(() => {
     const el = storyScrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [streamingText, storyFeed, latestSummary]);
+  }, [streamingText, storyFeed]);
 
   // P2：页面加载时尝试从 localStorage 恢复上次会话
   useEffect(() => {
@@ -247,9 +305,10 @@ function App() {
         setInitialized(true);
         setName(state.player?.name ?? "沈言");
         setStoryFeed([
-          { narrative: "[已自动恢复上次会话进度]" },
-          { narrative: state.currentNarrative }
+          { narrative: "[已自动恢复上次会话进度]", actionSource: "intro", introLabel: "系统" },
+          { narrative: state.currentNarrative, actionSource: "intro", introLabel: "当前进度" }
         ]);
+        setCollapsedIndices(new Set());
         setChoices(state.currentChoices);
         setProgress(state.progress);
         setStats(state.stats);
@@ -292,10 +351,10 @@ function App() {
   const resetForInit = () => {
     setStoryFeed([]);
     setStreamingText("");
-    setLatestSummary("");
+    setCollapsedIndices(new Set());
+    updatePendingAction(null);
     streamingRef.current = "";
     setActionInput("");
-    setInputFeedback(null);
     setTurn(0);
     setProgress(defaultProgress);
     setStats(defaultStats);
@@ -338,8 +397,8 @@ function App() {
       const data = (await res.json()) as InitResponse;
       setActiveSessionId(data.sessionId || id);
       setInitialized(true);
-      setStoryFeed([{ narrative: data.narrative }]);
-      setLatestSummary("");
+      setStoryFeed([{ narrative: data.narrative, actionSource: "intro", introLabel: "开场" }]);
+      setCollapsedIndices(new Set());
       setChoices(data.choices);
       setProgress(data.progress);
       setStats(data.stats);
@@ -379,7 +438,6 @@ function App() {
     pendingDoneSummaryRef.current = null;
     setStreamingText("");
     streamingRef.current = "";
-    setInputFeedback(null);
 
     try {
       const res = await fetch(`${API_BASE}/sessions/${activeSessionId}/actions`, {
@@ -429,6 +487,11 @@ function App() {
   };
 
   const handleChoice = async (choiceId: string) => {
+    const selected = choices.find((c) => c.id === choiceId);
+    updatePendingAction({
+      action: selected?.title ?? "（策略卡片）",
+      source: "choice"
+    });
     await submitTurn({ choiceId });
   };
 
@@ -437,8 +500,12 @@ function App() {
       setStatus("请输入你的行动指令后再发送");
       return;
     }
-    const rawInput = actionInput;
+    const rawInput = actionInput.trim();
     setActionInput("");
+    updatePendingAction({
+      action: rawInput,
+      source: "input"
+    });
     await submitTurn({ userInput: rawInput });
   };
 
@@ -475,7 +542,16 @@ function App() {
 
     if (eventType === "input_feedback") {
       const feedback = payload as InputFeedback;
-      setInputFeedback(feedback);
+      const prev = pendingActionRef.current;
+      // 仅为自由输入合并识别结果；策略卡片选择时不展示"系统识别"（冗余）
+      if (prev?.source === "input") {
+        updatePendingAction({
+          ...prev,
+          resolvedTitle: feedback.resolvedChoiceTitle,
+          resolvedConfidence: feedback.confidence,
+          fallbackUsed: feedback.fallbackUsed
+        });
+      }
       return;
     }
 
@@ -598,10 +674,11 @@ function App() {
 
       setInitialized(state.initialized);
       setStoryFeed([
-        { narrative: `[已加载存档 ${saveIdInput.trim()}]` },
-        { narrative: state.currentNarrative }
+        { narrative: `[已加载存档 ${saveIdInput.trim()}]`, actionSource: "intro", introLabel: "系统" },
+        { narrative: state.currentNarrative, actionSource: "intro", introLabel: "当前进度" }
       ]);
-      setLatestSummary("");
+      setCollapsedIndices(new Set());
+      updatePendingAction(null);
       setChoices(state.currentChoices);
       setProgress(state.progress);
       setStats(state.stats);
@@ -613,7 +690,6 @@ function App() {
       setTurn(state.turn);
       setStreamingText("");
       streamingRef.current = "";
-      setInputFeedback(null);
       setGameOver(state.gameOver ?? false);
       setEndingType(state.endingType ?? null);
       setEndingNarrative(state.endingNarrative ?? "");
@@ -682,18 +758,12 @@ function App() {
                   <BookOpenText className="h-5 w-5 text-cyan-300" />
                   庭审记录流
                 </CardTitle>
-                <CardDescription className="text-slate-400">SSE 流式叙事，实时显示本轮攻防进展。</CardDescription>
-                {latestSummary ? (
-                  <div className="mt-3 flex items-start gap-2 rounded-md border border-cyan-300/45 bg-cyan-500/15 px-3 py-2 text-sm text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.12)]">
-                    <span className="shrink-0 rounded-sm bg-cyan-500/30 px-1.5 py-0.5 text-[11px] font-semibold tracking-widest text-cyan-100">本轮摘要</span>
-                    <span className="leading-relaxed">{latestSummary}</span>
-                  </div>
-                ) : null}
+                <CardDescription className="text-slate-400">SSE 流式叙事 · 新回合自动折叠旧条目，点击可随时展开回看。</CardDescription>
               </CardHeader>
               <CardContent className="min-h-0 flex-1">
                 <div
                   ref={storyScrollRef}
-                  className="story-scroll h-[520px] max-h-[60vh] min-h-[320px] space-y-3 overflow-y-auto pr-1"
+                  className="story-scroll h-[820px] max-h-[60vh] min-h-[520px] space-y-3 overflow-y-auto pr-1"
                 >
                   {!initialized ? (
                     <article className="story-card border-dashed border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
@@ -701,23 +771,98 @@ function App() {
                     </article>
                   ) : null}
 
-                  {storyFeed.map((item, index) => (
-                    <article
-                      key={`${index}-${item.narrative.slice(0, 8)}`}
-                      className="story-card text-slate-100"
-                    >
-                      {item.summary ? (
-                        <div className="mb-2 flex items-start gap-2 rounded-md border border-cyan-300/35 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100">
-                          <span className="shrink-0 font-semibold tracking-widest text-cyan-300/90">摘要</span>
-                          <span className="leading-relaxed">{item.summary}</span>
+                  {storyFeed.map((item, index) => {
+                    const collapsed = collapsedIndices.has(index);
+                    const hasAction = (item.actionSource === "choice" || item.actionSource === "input") && !!item.playerAction;
+                    const isIntro = item.actionSource === "intro";
+                    const showResolution = item.actionSource === "input" && !!item.resolvedTitle;
+                    const previewText = !item.summary
+                      ? item.narrative.slice(0, 60) + (item.narrative.length > 60 ? "…" : "")
+                      : "";
+
+                    return (
+                      <article
+                        key={`${index}-${item.narrative.slice(0, 8)}`}
+                        className={cn("story-card text-slate-100", collapsed && "story-card-collapsed")}
+                      >
+                        <div className="mb-1.5 flex items-start justify-between gap-2">
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            {hasAction ? (
+                              <Badge className="border-amber-300/35 bg-amber-400/10 text-amber-100" variant="outline">
+                                <UserRound className="mr-1 h-3 w-3" />
+                                本轮行动：{item.playerAction}
+                              </Badge>
+                            ) : null}
+                            {isIntro && item.introLabel ? (
+                              <Badge className="border-slate-500/40 bg-slate-700/40 text-slate-300" variant="outline">
+                                {item.introLabel}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleCollapsed(index)}
+                            className="group flex shrink-0 items-center gap-1 rounded-md border border-slate-600/40 bg-slate-800/50 px-2 py-0.5 text-[11px] text-slate-300 transition-colors hover:border-cyan-300/40 hover:text-cyan-100"
+                            aria-label={collapsed ? "展开全文" : "收起正文"}
+                          >
+                            <span>{collapsed ? "展开" : "收起"}</span>
+                            <ChevronDown className={cn("chevron-icon h-3 w-3", !collapsed && "rotated")} />
+                          </button>
                         </div>
-                      ) : null}
-                      <p className="whitespace-pre-line">{item.narrative}</p>
-                    </article>
-                  ))}
+
+                        {showResolution ? (
+                          <p className={cn(
+                            "mb-1.5 text-[11px] leading-relaxed",
+                            item.fallbackUsed ? "text-amber-200/80" : "text-cyan-200/80"
+                          )}>
+                            系统识别：{item.resolvedTitle}
+                            {typeof item.resolvedConfidence === "number" ? (
+                              <>（置信度 {Math.round(item.resolvedConfidence * 100)}%）</>
+                            ) : null}
+                          </p>
+                        ) : null}
+
+                        {item.summary ? (
+                          <div className="mb-2 flex items-start gap-2 rounded-md border border-cyan-300/35 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100">
+                            <span className="shrink-0 font-semibold tracking-widest text-cyan-300/90">摘要</span>
+                            <span className="leading-relaxed">{item.summary}</span>
+                          </div>
+                        ) : null}
+
+                        <div className={cn("collapsible-body", !collapsed && "open")}>
+                          <div className="collapsible-inner">
+                            <p className="whitespace-pre-line pt-0.5">{item.narrative}</p>
+                          </div>
+                        </div>
+
+                        {collapsed && !item.summary && previewText ? (
+                          <p className="text-xs leading-relaxed text-slate-400">{previewText}</p>
+                        ) : null}
+                      </article>
+                    );
+                  })}
 
                   {streamingText ? (
                     <article className="story-card story-card-live text-slate-100">
+                      {pendingAction ? (
+                        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                          <Badge className="border-amber-300/35 bg-amber-400/10 text-amber-100" variant="outline">
+                            <UserRound className="mr-1 h-3 w-3" />
+                            本轮行动：{pendingAction.action}
+                          </Badge>
+                          {pendingAction.source === "input" && pendingAction.resolvedTitle ? (
+                            <span className={cn(
+                              "text-[11px]",
+                              pendingAction.fallbackUsed ? "text-amber-200/80" : "text-cyan-200/80"
+                            )}>
+                              系统识别：{pendingAction.resolvedTitle}
+                              {typeof pendingAction.resolvedConfidence === "number" ? (
+                                <>（{Math.round(pendingAction.resolvedConfidence * 100)}%）</>
+                              ) : null}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <span className="whitespace-pre-line">{streamingText}</span>
                       <span className="inline-block h-4 w-[2px] animate-pulse bg-cyan-300 align-middle" />
                     </article>
@@ -759,22 +904,6 @@ function App() {
                     发送指令
                   </Button>
                 </div>
-
-                {inputFeedback ? (
-                  <div
-                    className={cn(
-                      "rounded-md border px-3 py-2 text-xs",
-                      inputFeedback.fallbackUsed
-                        ? "border-amber-300/35 bg-amber-500/10 text-amber-100"
-                        : "border-cyan-300/30 bg-cyan-500/10 text-cyan-100"
-                    )}
-                  >
-                    <p>
-                      系统识别：{inputFeedback.resolvedChoiceTitle}（置信度{" "}
-                      {Math.round(inputFeedback.confidence * 100)}%</p>
-                    <p className="mt-1 text-[11px] opacity-90">{inputFeedback.reason}</p>
-                  </div>
-                ) : null}
 
                 <div className={cn(
                   "grid gap-3",

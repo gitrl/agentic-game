@@ -106,10 +106,64 @@
     padding: 0.8rem 0.9rem;
     line-height: 1.7;
     animation: fade-up 260ms ease both;
+    transition: background 320ms ease, border-color 320ms ease, opacity 320ms ease;
   }
 
   .story-card-live {
     border-color: rgba(34, 211, 238, 0.56);
     box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18), 0 0 26px rgba(14, 165, 233, 0.2);
+  }
+
+  .story-card-collapsed {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.55), rgba(30, 41, 59, 0.3));
+    border-color: rgba(103, 232, 249, 0.1);
+  }
+
+  .story-card-collapsed:hover {
+    border-color: rgba(103, 232, 249, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.5));
+  }
+
+  .collapsible-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .collapsible-body > .collapsible-inner {
+    overflow: hidden;
+    min-height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 220ms ease, transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .collapsible-body.open {
+    grid-template-rows: 1fr;
+  }
+
+  .collapsible-body.open > .collapsible-inner {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 280ms ease 60ms, transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chevron-icon {
+    transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chevron-icon.rotated {
+    transform: rotate(180deg);
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
