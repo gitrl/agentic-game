@@ -99,6 +99,15 @@ export type ReplayResponse = {
   };
 };
 
+export type SaveListItem = {
+  saveId: string;
+  label: string;
+  turn: number;
+  chapter: number;
+  chapterTitle: string;
+  createdAt: string;
+};
+
 export type EndingType = "truth" | "wrongful" | "misled" | "interference";
 
 export type GameStateResponse = {

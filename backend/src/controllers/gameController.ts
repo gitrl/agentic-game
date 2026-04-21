@@ -115,8 +115,14 @@ export const createGameController = (gameService: GameService) => {
     res.status(201).json({
       saveId: snapshot.saveId,
       sessionId: snapshot.sessionId,
+      label: snapshot.label,
       createdAt: snapshot.createdAt
     });
+  };
+
+  const listSaves = async (req: Request, res: Response) => {
+    const saves = await gameService.listSaves(req.params.id);
+    res.json({ saves });
   };
 
   const loadSave = async (req: Request, res: Response) => {
@@ -138,6 +144,7 @@ export const createGameController = (gameService: GameService) => {
     sessionAction,
     getState,
     createSave,
+    listSaves,
     loadSave,
     getReplay
   };

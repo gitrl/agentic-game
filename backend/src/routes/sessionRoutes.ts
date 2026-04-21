@@ -13,6 +13,7 @@ export const createSessionRoutes = (gameService: GameService): Router => {
   router.post("/sessions/:id/actions", asyncHandler(controller.sessionAction));
   router.get("/sessions/:id/state", asyncHandler(controller.getState));
   router.post("/sessions/:id/save", asyncHandler(controller.createSave));
+  router.get("/sessions/:id/saves", asyncHandler(controller.listSaves));
   router.post("/sessions/load", asyncHandler(controller.loadSave));
   router.get("/sessions/:id/replay", asyncHandler(controller.getReplay));
 

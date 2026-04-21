@@ -1,8 +1,8 @@
-import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { v4 as uuidv4 } from "uuid";
-import type { GameState, SaveSnapshot } from "../../types/game.js";
+import type { GameState, SaveListItem, SaveSnapshot } from "../../types/game.js";
 import type { GameRepository } from "../gameRepository.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,11 +58,12 @@ export class FileGameRepository implements GameRepository {
     await writeJson(sessionPath(state.sessionId), state);
   }
 
-  async createSave(sessionId: string, state: GameState): Promise<SaveSnapshot> {
+  async createSave(sessionId: string, state: GameState, label: string): Promise<SaveSnapshot> {
     await this.ready;
     const snapshot: SaveSnapshot = {
       saveId: uuidv4(),
       sessionId,
+      label,
       state: JSON.parse(JSON.stringify(state)) as GameState,
       createdAt: new Date().toISOString()
     };
@@ -73,5 +74,37 @@ export class FileGameRepository implements GameRepository {
   async getSave(saveId: string): Promise<SaveSnapshot | undefined> {
     await this.ready;
     return readJson<SaveSnapshot>(savePath(saveId));
+  }
+
+  async listSaves(sessionId: string): Promise<SaveListItem[]> {
+    await this.ready;
+    const files = await readdir(SAVES_DIR);
+    const items: SaveListItem[] = [];
+
+    for (const file of files) {
+      if (!file.endsWith(".json")) continue;
+      const snapshot = await readJson<SaveSnapshot>(resolve(SAVES_DIR, file));
+      if (!snapshot || snapshot.sessionId !== sessionId) continue;
+      items.push({
+        saveId: snapshot.saveId,
+        label: snapshot.label ?? `第${snapshot.state.turn}轮`,
+        turn: snapshot.state.turn,
+        chapter: snapshot.state.progress.chapter,
+        chapterTitle: snapshot.state.progress.chapterTitle,
+        createdAt: snapshot.createdAt
+      });
+    }
+
+    items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return items;
+  }
+
+  async deleteSave(saveId: string): Promise<void> {
+    await this.ready;
+    try {
+      await unlink(savePath(saveId));
+    } catch {
+      // 文件不存在时忽略
+    }
   }
 }

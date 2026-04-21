@@ -8,7 +8,8 @@ import {
   updateMemoryBundles,
   deriveProgress,
   snapshotState,
-  normalizeChanges
+  normalizeChanges,
+  generateSaveLabel
 } from "../engine/gameEngine.js";
 import { AppError } from "../core/errors.js";
 import type { GameRepository } from "../repositories/gameRepository.js";
@@ -18,6 +19,7 @@ import type {
   ActionResult,
   InputFeedback,
   InitPayload,
+  SaveListItem,
   SaveSnapshot,
   TokenUsage
 } from "../types/game.js";
@@ -173,7 +175,21 @@ export class GameService {
 
   async createSave(sessionId: string): Promise<SaveSnapshot> {
     const state = await this.requireSession(sessionId);
-    return this.repository.createSave(sessionId, state);
+    const label = generateSaveLabel(state);
+    const snapshot = await this.repository.createSave(sessionId, state, label);
+
+    // 只保留最新 3 个存档，淘汰旧的
+    const saves = await this.repository.listSaves(sessionId);
+    for (const old of saves.slice(3)) {
+      await this.repository.deleteSave(old.saveId);
+    }
+
+    return snapshot;
+  }
+
+  async listSaves(sessionId: string): Promise<SaveListItem[]> {
+    await this.requireSession(sessionId);
+    return this.repository.listSaves(sessionId);
   }
 
   async loadSave(saveId: string): Promise<{ sessionId: string; fromSaveId: string; createdAt: string }> {

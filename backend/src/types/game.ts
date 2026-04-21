@@ -152,6 +152,16 @@ export type ActionResult = {
 export type SaveSnapshot = {
   saveId: string;
   sessionId: string;
+  label: string;
   state: GameState;
+  createdAt: string;
+};
+
+export type SaveListItem = {
+  saveId: string;
+  label: string;
+  turn: number;
+  chapter: number;
+  chapterTitle: string;
   createdAt: string;
 };

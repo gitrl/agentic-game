@@ -684,6 +684,32 @@ const pushNumericDiff = (rows: string[], key: string, before: number, after: num
   }
 };
 
+export const generateSaveLabel = (state: GameState): string => {
+  const base = `第${state.turn}轮·${state.progress.chapterTitle}`;
+
+  if (state.gameOver && state.endingType) {
+    const endingMap: Record<string, string> = {
+      truth: "真相大白", wrongful: "冤案终判", misled: "误导裁决", interference: "权力干预"
+    };
+    return `${base}·${endingMap[state.endingType] ?? "终局"}`;
+  }
+  if (state.flags.interferenceDetected) return `${base}·外部干预已暴露`;
+  if (state.flags.forgedEvidenceAdmitted) return `${base}·伪证已入卷`;
+  if (state.flags.keyWitnessFlipped) return `${base}·证人已反转`;
+
+  const outlookMap: Record<string, string> = {
+    truth: "真相倾向", wrongful: "冤案风险", misled: "被误导风险", interference: "干预风险"
+  };
+  if (state.verdictOutlook !== "undetermined" && outlookMap[state.verdictOutlook]) {
+    return `${base}·${outlookMap[state.verdictOutlook]}`;
+  }
+
+  const latest = state.historySummaries[state.historySummaries.length - 1];
+  if (latest) return `${base}·${latest.slice(0, 15)}`;
+
+  return base;
+};
+
 export const snapshotState = (state: GameState) => {
   return JSON.parse(
     JSON.stringify({

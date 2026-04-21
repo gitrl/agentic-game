@@ -7,13 +7,16 @@ import {
   Cpu,
   Database,
   Gavel,
+  Loader2,
   Radar,
   Save,
   Scale,
   ShieldAlert,
   ShieldCheck,
   Timer,
-  UserRound
+  UserRound,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 
 import { Badge } from "./components/ui/badge";
@@ -35,6 +38,7 @@ import type {
   Progress,
   RebirthState,
   ReplayResponse,
+  SaveListItem,
   Stats
 } from "./types";
 
@@ -97,7 +101,6 @@ function App() {
   const [status, setStatus] = useState("请先阅读案情并输入姓名");
 
   const [name, setName] = useState("沈言");
-  const [actionInput, setActionInput] = useState("");
 
   type ActionSource = "choice" | "input" | "intro";
   type PendingAction = {
@@ -160,13 +163,71 @@ function App() {
   const [lastEvents, setLastEvents] = useState<string[]>([]);
   const [lastTokenUsage, setLastTokenUsage] = useState<TokenUsage | null>(null);
 
-  const [saveIdInput, setSaveIdInput] = useState("");
-  const [latestSaveId, setLatestSaveId] = useState("");
+  const [saveList, setSaveList] = useState<SaveListItem[]>([]);
   const [replayData, setReplayData] = useState<ReplayResponse | null>(null);
 
   const [gameOver, setGameOver] = useState(false);
   const [endingType, setEndingType] = useState<EndingType | null>(null);
   const [endingNarrative, setEndingNarrative] = useState("");
+
+  const [ttsPlayingIndex, setTtsPlayingIndex] = useState<number | null>(null);
+  const [ttsLoadingIndex, setTtsLoadingIndex] = useState<number | null>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopTts = () => {
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+    }
+    setTtsPlayingIndex(null);
+    setTtsLoadingIndex(null);
+  };
+
+  const playTts = async (text: string, index: number) => {
+    // 如果正在播放同一条，则停止
+    if (ttsPlayingIndex === index) {
+      stopTts();
+      return;
+    }
+    stopTts();
+    setTtsLoadingIndex(index);
+
+    try {
+      const res = await fetch(`${API_BASE}/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      if (!res.ok) {
+        setTtsLoadingIndex(null);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      ttsAudioRef.current = audio;
+
+      audio.onplay = () => {
+        setTtsLoadingIndex(null);
+        setTtsPlayingIndex(index);
+      };
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        setTtsPlayingIndex(null);
+        ttsAudioRef.current = null;
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        setTtsPlayingIndex(null);
+        setTtsLoadingIndex(null);
+        ttsAudioRef.current = null;
+      };
+
+      await audio.play();
+    } catch {
+      setTtsLoadingIndex(null);
+    }
+  };
 
   const progressLabel = useMemo(() => {
     return `第${progress.chapter}章《${progress.chapterTitle}》 ${progress.sceneInChapter}/${progress.maxScenesInChapter}幕`;
@@ -324,6 +385,14 @@ function App() {
           setEndingNarrative(state.endingNarrative ?? "");
         }
         setStatus("已自动恢复上次会话进度");
+        // 恢复后拉取存档列表
+        try {
+          const savesRes = await fetch(`${API_BASE}/sessions/${savedId}/saves`);
+          if (savesRes.ok) {
+            const savesData = (await savesRes.json()) as { saves: SaveListItem[] };
+            setSaveList(savesData.saves ?? []);
+          }
+        } catch { /* ignore */ }
       } catch {
         // 网络错误（后端未启动等），不清除 localStorage，下次刷新还能重试
       }
@@ -354,7 +423,6 @@ function App() {
     setCollapsedIndices(new Set());
     updatePendingAction(null);
     streamingRef.current = "";
-    setActionInput("");
     setTurn(0);
     setProgress(defaultProgress);
     setStats(defaultStats);
@@ -407,6 +475,7 @@ function App() {
       setEvidencePool(data.evidencePool);
       setNpcRelations(data.npcRelations);
       setVerdictOutlook(data.verdictOutlook);
+      setSaveList([]);
       setStatus("初始化完成：请选择本轮行动");
     } catch (error) {
       setStatus(`初始化失败：${(error as Error).message}`);
@@ -493,20 +562,6 @@ function App() {
       source: "choice"
     });
     await submitTurn({ choiceId });
-  };
-
-  const handleUserInputSubmit = async () => {
-    if (!actionInput.trim()) {
-      setStatus("请输入你的行动指令后再发送");
-      return;
-    }
-    const rawInput = actionInput.trim();
-    setActionInput("");
-    updatePendingAction({
-      action: rawInput,
-      source: "input"
-    });
-    await submitTurn({ userInput: rawInput });
   };
 
   const handleSseEvent = (rawEvent: string) => {
@@ -622,6 +677,19 @@ function App() {
     }
   };
 
+  const fetchSaveList = async () => {
+    const activeSessionId = sessionIdRef.current || sessionId;
+    if (!activeSessionId) return;
+    try {
+      const res = await fetch(`${API_BASE}/sessions/${activeSessionId}/saves`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { saves: SaveListItem[] };
+      setSaveList(data.saves ?? []);
+    } catch {
+      // 忽略网络错误
+    }
+  };
+
   const handleSave = async () => {
     const activeSessionId = sessionIdRef.current || sessionId;
     if (!activeSessionId || busy) {
@@ -635,9 +703,7 @@ function App() {
       if (!res.ok) {
         throw new Error(await readApiError(res, "保存失败"));
       }
-      const data = (await res.json()) as { saveId: string };
-      setLatestSaveId(data.saveId);
-      setSaveIdInput(data.saveId);
+      await fetchSaveList();
       setStatus("存档完成");
     } catch (error) {
       setStatus(`存档失败：${(error as Error).message}`);
@@ -646,10 +712,12 @@ function App() {
     }
   };
 
-  const handleLoad = async () => {
-    if (!saveIdInput.trim() || busy) {
+  const handleLoad = async (saveId: string) => {
+    if (!saveId || busy) {
       return;
     }
+
+    const label = saveList.find((s) => s.saveId === saveId)?.label ?? saveId;
 
     setBusy(true);
     setStatus("读档中...");
@@ -657,7 +725,7 @@ function App() {
       const res = await fetch(`${API_BASE}/sessions/load`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ saveId: saveIdInput.trim() })
+        body: JSON.stringify({ saveId })
       });
       if (!res.ok) {
         throw new Error(await readApiError(res, "读档失败"));
@@ -674,7 +742,7 @@ function App() {
 
       setInitialized(state.initialized);
       setStoryFeed([
-        { narrative: `[已加载存档 ${saveIdInput.trim()}]`, actionSource: "intro", introLabel: "系统" },
+        { narrative: `[已加载存档：${label}]`, actionSource: "intro", introLabel: "系统" },
         { narrative: state.currentNarrative, actionSource: "intro", introLabel: "当前进度" }
       ]);
       setCollapsedIndices(new Set());
@@ -693,6 +761,7 @@ function App() {
       setGameOver(state.gameOver ?? false);
       setEndingType(state.endingType ?? null);
       setEndingNarrative(state.endingNarrative ?? "");
+      setSaveList([]);
       setStatus("读档完成");
     } catch (error) {
       setStatus(`读档失败：${(error as Error).message}`);
@@ -823,9 +892,24 @@ function App() {
                         ) : null}
 
                         {item.summary ? (
-                          <div className="mb-2 flex items-start gap-2 rounded-md border border-cyan-300/35 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100">
+                          <div className="mb-2 flex items-center gap-2 rounded-md border border-cyan-300/35 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-100">
                             <span className="shrink-0 font-semibold tracking-widest text-cyan-300/90">摘要</span>
-                            <span className="leading-relaxed">{item.summary}</span>
+                            <span className="flex-1 leading-relaxed">{item.summary}</span>
+                            <button
+                              type="button"
+                              onClick={() => playTts(item.summary!, index)}
+                              disabled={ttsLoadingIndex === index}
+                              className="shrink-0 rounded p-1 transition-colors hover:bg-cyan-400/20 disabled:opacity-50"
+                              aria-label={ttsPlayingIndex === index ? "停止播报" : "语音播报"}
+                            >
+                              {ttsLoadingIndex === index ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-300" />
+                              ) : ttsPlayingIndex === index ? (
+                                <VolumeX className="h-3.5 w-3.5 text-cyan-300" />
+                              ) : (
+                                <Volume2 className="h-3.5 w-3.5 text-cyan-300/70 hover:text-cyan-300" />
+                              )}
+                            </button>
                           </div>
                         ) : null}
 
@@ -878,33 +962,10 @@ function App() {
                   本轮策略
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  你可以点击策略卡片，或直接输入自然语言指令（系统会自动归并并保底兜底）。
+                  点击下方策略卡片选择本轮行动。
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                  <Input
-                    value={actionInput}
-                    onChange={(e) => setActionInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void handleUserInputSubmit();
-                      }
-                    }}
-                    disabled={busy || !initialized || gameOver}
-                    placeholder="例如：我想先重构时间线，再质疑法医鉴定"
-                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-500"
-                  />
-                  <Button
-                    onClick={handleUserInputSubmit}
-                    disabled={busy || !initialized}
-                    className="bg-cyan-500 text-slate-950 hover:bg-cyan-400"
-                  >
-                    发送指令
-                  </Button>
-                </div>
-
                 <div className={cn(
                   "grid gap-3",
                   choices.length <= 3 ? "grid-cols-3" : choices.length === 4 ? "grid-cols-2" : "grid-cols-3"
@@ -1058,20 +1119,27 @@ function App() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                  <Input
-                    value={saveIdInput}
-                    onChange={(e) => setSaveIdInput(e.target.value)}
-                    placeholder="输入 Save ID"
-                    disabled={busy}
-                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
-                  />
-                  <Button className="bg-cyan-500 text-slate-950 hover:bg-cyan-400" onClick={handleLoad} disabled={!saveIdInput.trim() || busy}>
-                    读档
-                  </Button>
-                </div>
-
-                {latestSaveId ? <p className="text-xs text-cyan-200">最近存档：{latestSaveId}</p> : null}
+                {saveList.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-slate-400">存档列表（最近 3 个）</p>
+                    {saveList.map((save) => (
+                      <button
+                        key={save.saveId}
+                        type="button"
+                        onClick={() => handleLoad(save.saveId)}
+                        disabled={busy}
+                        className="w-full rounded-md border border-slate-700/80 bg-slate-900/70 px-3 py-2 text-left transition hover:border-cyan-300/40 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <p className="text-sm font-medium text-slate-100">{save.label}</p>
+                        <p className="text-xs text-slate-500">
+                          第{save.turn}轮 · {save.chapterTitle} · {new Date(save.createdAt).toLocaleString("zh-CN")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : initialized ? (
+                  <p className="text-xs text-slate-500">暂无存档，点击"存档"保存当前进度</p>
+                ) : null}
                 {replayData ? (
                   <div className="space-y-2">
                     <div className="space-y-1 rounded-md border border-slate-700/80 bg-slate-900/70 p-2 text-xs text-slate-300">
@@ -1135,7 +1203,7 @@ function App() {
               <p className="tracking-[0.32em] text-xs font-semibold uppercase text-cyan-300/80">Rebirth Legal Suspense</p>
               <CardTitle className="text-3xl font-semibold tracking-wide text-slate-50">
                 <Scale className="mb-1 mr-2 inline-block h-7 w-7 text-cyan-300" />
-                逆判：重生证词
+                重生查案 . 谁推了她
               </CardTitle>
               <CardDescription className="text-sm text-slate-400">
                 上一世的判决是错的。这一次，让证据先于记忆发声。

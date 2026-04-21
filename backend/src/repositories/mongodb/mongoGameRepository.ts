@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import type { Collection, Db } from "mongodb";
-import type { GameState, SaveSnapshot } from "../../types/game.js";
+import type { GameState, SaveListItem, SaveSnapshot } from "../../types/game.js";
 import type { GameRepository } from "../gameRepository.js";
 
 type SessionDocument = {
@@ -12,6 +12,7 @@ type SessionDocument = {
 type SaveDocument = {
   _id: string;
   sessionId: string;
+  label: string;
   state: GameState;
   createdAt: string;
 };
@@ -51,10 +52,11 @@ export class MongoGameRepository implements GameRepository {
     );
   }
 
-  async createSave(sessionId: string, state: GameState): Promise<SaveSnapshot> {
+  async createSave(sessionId: string, state: GameState, label: string): Promise<SaveSnapshot> {
     const doc: SaveDocument = {
       _id: uuidv4(),
       sessionId,
+      label,
       state: clone(state),
       createdAt: new Date().toISOString()
     };
@@ -64,6 +66,7 @@ export class MongoGameRepository implements GameRepository {
     return {
       saveId: doc._id,
       sessionId: doc.sessionId,
+      label: doc.label,
       state: clone(doc.state),
       createdAt: doc.createdAt
     };
@@ -78,8 +81,25 @@ export class MongoGameRepository implements GameRepository {
     return {
       saveId: doc._id,
       sessionId: doc.sessionId,
+      label: doc.label ?? `第${doc.state.turn}轮`,
       state: clone(doc.state),
       createdAt: doc.createdAt
     };
+  }
+
+  async listSaves(sessionId: string): Promise<SaveListItem[]> {
+    const docs = await this.saves.find({ sessionId }).sort({ createdAt: -1 }).toArray();
+    return docs.map((doc) => ({
+      saveId: doc._id,
+      label: doc.label ?? `第${doc.state.turn}轮`,
+      turn: doc.state.turn,
+      chapter: doc.state.progress.chapter,
+      chapterTitle: doc.state.progress.chapterTitle,
+      createdAt: doc.createdAt
+    }));
+  }
+
+  async deleteSave(saveId: string): Promise<void> {
+    await this.saves.deleteOne({ _id: saveId });
   }
 }
