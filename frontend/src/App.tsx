@@ -926,6 +926,16 @@ function App() {
                     );
                   })}
 
+                  {busy && !streamingText && pendingAction ? (
+                    <div className="flex justify-start" aria-label="正在生成回应">
+                      <div className="typing-indicator">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  ) : null}
+
                   {streamingText ? (
                     <article className="story-card story-card-live text-slate-100">
                       {pendingAction ? (
@@ -1203,7 +1213,7 @@ function App() {
               <p className="tracking-[0.32em] text-xs font-semibold uppercase text-cyan-300/80">Rebirth Legal Suspense</p>
               <CardTitle className="text-3xl font-semibold tracking-wide text-slate-50">
                 <Scale className="mb-1 mr-2 inline-block h-7 w-7 text-cyan-300" />
-                重生查案 . 谁推了她
+                重生破案 . 谁推了她
               </CardTitle>
               <CardDescription className="text-sm text-slate-400">
                 上一世的判决是错的。这一次，让证据先于记忆发声。

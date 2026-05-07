@@ -166,4 +166,42 @@
       transform: translateY(0);
     }
   }
+
+  .typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 14px;
+    border-radius: 9999px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(103, 232, 249, 0.22);
+    animation: fade-up 200ms ease both;
+  }
+
+  .typing-indicator span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(34, 211, 238, 0.9);
+    animation: typing-bounce 1.3s infinite ease-in-out both;
+  }
+
+  .typing-indicator span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes typing-bounce {
+    0%, 80%, 100% {
+      transform: scale(0.55);
+      opacity: 0.4;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 }
