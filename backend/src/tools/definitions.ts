@@ -225,5 +225,50 @@ export const TOOL_DEFINITIONS: Tool[] = [
         required: ["anchor"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "recall_memory",
+      description: "主动检索历史记忆。按需调用——当玩家/叙事需要引用被动窗口外的旧事件、完整证据池、早期玩家行动、跨周目真相时使用。只读，不改状态。",
+      parameters: {
+        type: "object",
+        properties: {
+          scope: {
+            type: "string",
+            enum: [
+              "history_summaries",
+              "replay_actions",
+              "long_anchors",
+              "mid_summary",
+              "evidence_full",
+              "known_truths"
+            ],
+            description: "检索范围：history_summaries=全部轮次摘要(上限20) / replay_actions=玩家完整历史行动(无上限) / long_anchors=长期锚点 / mid_summary=中期阶段摘要 / evidence_full=完整证据池 / known_truths=跨周目已知真相"
+          },
+          query: {
+            type: "string",
+            description: "可选关键词（中文，大小写不敏感）：匹配文本内容；不填则按时间倒序返回最新结果"
+          },
+          turnFrom: {
+            type: "integer",
+            minimum: 1,
+            description: "可选：起始轮次（含），仅对 history_summaries/replay_actions 生效"
+          },
+          turnTo: {
+            type: "integer",
+            minimum: 1,
+            description: "可选：结束轮次（含），仅对 history_summaries/replay_actions 生效"
+          },
+          limit: {
+            type: "integer",
+            minimum: 1,
+            maximum: 10,
+            description: "返回结果上限（默认 5，最多 10）"
+          }
+        },
+        required: ["scope"]
+      }
+    }
   }
 ];

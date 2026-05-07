@@ -6,6 +6,10 @@ export type LlmConfig = {
   thinkingEnabled: boolean;
   thinkingBudget: number;
   timeoutMs: number;
+  /** Memory Agent 使用的压缩模型（建议用便宜的 qwen-turbo） */
+  memoryModel: string;
+  /** Memory Agent 的超时毫秒数 */
+  memoryTimeoutMs: number;
 };
 
 const toNumber = (value: string | undefined, fallback: number): number => {
@@ -31,6 +35,8 @@ export const readLlmConfig = (): LlmConfig => {
     temperature: toNumber(process.env.OPENAI_TEMPERATURE, 0.7),
     thinkingEnabled: toBoolean(process.env.OPENAI_ENABLE_THINKING, false),
     thinkingBudget: toNumber(process.env.OPENAI_THINKING_BUDGET, 64),
-    timeoutMs: toNumber(process.env.OPENAI_TIMEOUT_MS, 30000)
+    timeoutMs: toNumber(process.env.OPENAI_TIMEOUT_MS, 30000),
+    memoryModel: process.env.MEMORY_MODEL?.trim() || "qwen-turbo-latest",
+    memoryTimeoutMs: toNumber(process.env.MEMORY_TIMEOUT_MS, 20000)
   };
 };

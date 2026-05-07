@@ -367,14 +367,12 @@ export const evaluateVerdictOutlook = (state: GameState): GameState["verdictOutl
   return "undetermined";
 };
 
-export const updateMemoryBundles = (state: GameState, narrative: string, summary: string): void => {
+export const updateMemoryBundles = (state: GameState, narrative: string, _summary: string): void => {
+  // shortWindow 保留作为 save 结构兼容字段，但目前没有消费者。
   state.memory.shortWindow.push(narrative);
   state.memory.shortWindow = state.memory.shortWindow.slice(-6);
 
-  if (state.turn % 5 === 0) {
-    state.memory.midSummary.push(summary);
-    state.memory.midSummary = state.memory.midSummary.slice(-10);
-  }
+  // midSummary 不再由此函数推入——改由 MemoryAgentService 每 N 轮异步压缩写入（见 gameService.processTurn）。
 
   if (state.flags.keyWitnessFlipped && !state.memory.longAnchors.includes("关键证人立场已反转")) {
     state.memory.longAnchors.push("关键证人立场已反转");

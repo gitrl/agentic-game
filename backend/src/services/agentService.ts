@@ -6,7 +6,6 @@ import { WORLD_CONTEXT } from "../prompts/worldContext.js";
 import { buildChapterContext } from "../prompts/chapterScripts.js";
 import { TOOL_DEFINITIONS } from "../tools/definitions.js";
 import { executeToolCall, type ToolCallRecord } from "../tools/executor.js";
-import { readMemoryFile } from "../utils/memoryFileWriter.js";
 import { AppError } from "../core/errors.js";
 
 type AgentTurnResult = {
@@ -22,9 +21,8 @@ export type AgentStreamOptions = {
 };
 
 const MAX_TOOL_ROUNDS = 3;
-const MAX_MEMORY_CONTEXT_CHARS = 1400;
-const MAX_RECENT_SUMMARIES = 2;
-const MAX_EVIDENCE_ITEMS = 4;
+const MAX_RECENT_SUMMARIES = 5;
+const MAX_EVIDENCE_ITEMS = 10;
 const MAX_LAST_CHOICES = 4;
 
 export class AgentService {
@@ -74,12 +72,16 @@ export class AgentService {
     playerAction: { choiceId?: string; userInput?: string },
     options?: AgentStreamOptions
   ): Promise<AgentTurnResult> {
-    const memoryContext = await readMemoryFile(state.sessionId);
-    const userMessage = this.buildUserContext(state, playerAction, memoryContext);
+    const userMessage = this.buildUserContext(state, playerAction);
     const toolsForTurn = this.buildToolsForTurn(playerAction);
 
+    // System message 里合并 AGENT_SYSTEM_PROMPT + WORLD_CONTEXT，两者都是永不变的稳定前缀，
+    // 合并后可作为连续字节命中 prompt cache。WORLD_CONTEXT 原本放在 user message 尾部，
+    // 但 user message 里其它字段每轮变化，导致整个 user body 无法命中缓存。
+    const systemContent = `${AGENT_SYSTEM_PROMPT}\n\n# 世界观设定（固定）\n\n${WORLD_CONTEXT}`;
+
     const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: "system", content: AGENT_SYSTEM_PROMPT },
+      { role: "system", content: systemContent },
       { role: "user", content: JSON.stringify(userMessage, null, 2) }
     ];
 
@@ -158,7 +160,11 @@ export class AgentService {
       }
 
       if (roundUsage) {
-        const cachedTokens: number = roundUsage.prompt_tokens_details?.cached_tokens ?? 0;
+        const cachedTokens: number =
+          roundUsage.prompt_tokens_details?.cached_tokens ??
+          roundUsage.prompt_cache_hit_tokens ??
+          roundUsage.cached_tokens ??
+          0;
         totalPromptTokens += (roundUsage.prompt_tokens ?? 0) - cachedTokens;
         totalCachedTokens += cachedTokens;
         totalCompletionTokens += roundUsage.completion_tokens ?? 0;
@@ -245,8 +251,7 @@ export class AgentService {
 
   private buildUserContext(
     state: GameState,
-    playerAction: { choiceId?: string; userInput?: string },
-    memoryContext: string
+    playerAction: { choiceId?: string; userInput?: string }
   ) {
     // Resolve player action description
     let actionDesc: { type: string; choiceId?: string; choiceTitle?: string; userInput?: string };
@@ -268,37 +273,47 @@ export class AgentService {
     const nextTurn = state.turn + 1;
     const progress = this.deriveProgress(nextTurn);
 
-    const recentSummaries = state.historySummaries
-      .slice(-MAX_RECENT_SUMMARIES)
-      .map((s) => s.slice(0, 90));
+    const recentSummaries = state.historySummaries.slice(-MAX_RECENT_SUMMARIES);
     const compactChoices = state.currentChoices.slice(0, MAX_LAST_CHOICES).map((c) => ({
       id: c.id,
       title: c.title,
       impactHint: c.impactHint
     }));
 
+    // 字段顺序按 "稳定→追加式→每轮变" 排列，使 JSON.stringify 后前缀尽可能稳定，
+    // 命中 prompt cache。V8 保证非数字键按插入顺序序列化。
     return {
-      turn: nextTurn,
-      progress,
+      // ─── 稳定前缀（游戏内/章节内不变，前几轮会缓存命中）─────────────────
       player: {
         name: state.player.name,
         role: state.player.role,
         talent: state.player.talent
       },
-      playerAction: actionDesc,
+      chapterScript: buildChapterContext(Math.max(state.maxRevealedChapter ?? 1, progress.chapter)),
+
+      // ─── 追加式中段（大多数轮次无变化或只在尾部追加）─────────────────────
+      longAnchors: state.memory.longAnchors,
+      midSummary: state.memory.midSummary,
+      knownTruths: state.rebirth.knownTruths,
+
+      // ─── 每轮变动尾部（放在最后，前缀失效只从这里开始）──────────────────
       stats: state.stats,
       flags: state.flags,
-      evidencePool: this.buildEvidenceContext(state.evidencePool),
-      npcRelations: state.npcRelations,
       verdictOutlook: state.verdictOutlook,
-      rebirth: state.rebirth,
+      rebirth: {
+        loop: state.rebirth.loop,
+        memoryRetention: state.rebirth.memoryRetention,
+        fate: state.rebirth.fate
+      },
+      npcRelations: state.npcRelations,
+      evidencePool: this.buildEvidenceContext(state.evidencePool),
       recentHistory: recentSummaries.length > 0
         ? recentSummaries.map((s, i) => `[轮${nextTurn - recentSummaries.length + i}] ${s}`).join("\n")
         : "(暂无历史)",
-      memoryContext: truncateContext(memoryContext, MAX_MEMORY_CONTEXT_CHARS) || "(暂无记忆记录)",
       lastChoices: compactChoices,
-      worldContext: WORLD_CONTEXT,
-      chapterScript: buildChapterContext(Math.max(state.maxRevealedChapter ?? 1, progress.chapter))
+      playerAction: actionDesc,
+      turn: nextTurn,
+      progress
     };
   }
 
@@ -325,7 +340,7 @@ export class AgentService {
         title: evidence.title,
         reliability: evidence.reliability,
         status: evidence.status,
-        note: evidence.note.slice(0, 80)
+        note: evidence.note
       }));
   }
 
@@ -414,16 +429,6 @@ export class AgentService {
   }
 }
 
-/** 截断文本到指定字符数上限，保留开头和结尾 */
-function truncateContext(text: string, maxChars: number): string {
-  if (!text || text.length <= maxChars) {
-    return text;
-  }
-  const headSize = Math.floor(maxChars * 0.7);
-  const tailSize = maxChars - headSize - 20;
-  return text.slice(0, headSize) + "\n\n...(中间内容已省略)...\n\n" + text.slice(-tailSize);
-}
-
 function summarizeToolResult(record: ToolCallRecord): unknown {
   const result = record.result as Record<string, unknown>;
 
@@ -444,6 +449,14 @@ function summarizeToolResult(record: ToolCallRecord): unknown {
       return { ok: result.stored ?? false };
     case "write_memory_anchor":
       return { ok: result.stored ?? false, total: result.total ?? null };
+    case "recall_memory":
+      return {
+        ok: true,
+        scope: result.scope ?? null,
+        matched: result.matched ?? 0,
+        returned: result.returned ?? 0,
+        results: result.results ?? []
+      };
     default:
       return result;
   }

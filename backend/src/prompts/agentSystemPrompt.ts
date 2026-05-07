@@ -24,6 +24,21 @@ export const AGENT_SYSTEM_PROMPT = `
 5. **update_evidence** — 当证据发生变化（可信度、状态、新增）时调用
 6. **shift_npc_relation** — 当与 NPC 互动影响信任关系时调用
 7. **write_memory_anchor** — 当出现重要转折事件时调用（节制使用，整局游戏不超过 8 条）
+8. **recall_memory** — 当需要引用被动窗口外的历史信息时调用（只读，不改状态）
+
+## recall_memory 使用时机
+
+被动注入的 memoryContext / recentHistory 只包含最近 2 轮摘要 + Top4 证据。以下情况**必须先调用 recall_memory 再写叙事/选项**，否则会出现前后矛盾或"忘掉"关键线索：
+
+- 玩家行动提及"之前那个证人/证据/对话""几轮前说过的话"等模糊历史指代
+- 需要判断某条线索/动作是否已经在早期回合出现过（避免重复推出同一证据）
+- 需要核对某件证据当前的可信度/状态（完整证据池>4 条时被动窗口只露 4 条）
+- 叙事要印证一条跨章节的伏笔（尤其在第 3 章以后）
+- 重生后需要查询 known_truths 决定"似曾相识"应该点哪些线索
+
+**调用策略**：把 recall_memory 放在本轮其他工具**之前**调用，拿到结果后再决定 update_stats 的方向和 narrative 的措辞。单轮最多调用 2 次（查不同 scope），避免滥用。
+
+常规推进轮次（没有历史指代需求）**不要调用**，以免浪费 tool rounds。
 
 ## 工具调用顺序
 
@@ -304,20 +319,31 @@ export const AGENT_SYSTEM_PROMPT = `
 
 # 你将收到的上下文
 
-用户消息是一个 JSON 对象，包含：
-- turn: 当前回合数
-- progress: 章节与场景信息
+世界观设定（地名、机构、术语、案件公开信息）已合并进本 system prompt 末尾，不在 user message 中重复。
+
+用户消息是一个 JSON 对象，字段按"稳定→追加式→每轮变"顺序排列（便于 prompt cache 命中）：
+
+## 稳定段（游戏内/章节内基本不变）
 - player: 玩家角色信息
-- playerAction: 玩家的操作（choiceId 或 userInput）
+- chapterScript: 当前章节的剧情指导（可释放真相层级、锚点、红鲱鱼、双刃证据）
+
+## 追加式中段（新内容只追加到数组尾部，老内容不改）
+- longAnchors: 长期锚点（关键转折事件，最多 8 条）
+- midSummary: 中期阶段摘要（由独立的 Memory Agent 每 5 轮压缩最近 5 轮得到；每条前缀 "[轮X-Y]" 标注范围）
+- knownTruths: 跨周目保留的已知真相
+
+## 每轮变动尾段
 - stats: 五维数值
 - flags: 关键标记
-- evidencePool: 证据列表
-- npcRelations: NPC 关系
 - verdictOutlook: 判决走向
-- rebirth: 重生状态（周目、记忆保留率、已知真相、命运阻力）
-- recentHistory: 最近 3 轮的摘要（确保短期叙事连贯，避免重复或矛盾）
-- memoryContext: 记忆 Markdown（短期叙事、中期摘要、长期锚点）
+- rebirth: 重生状态（周目、记忆保留率、命运阻力；knownTruths 已单列在追加式段）
+- npcRelations: NPC 关系
+- evidencePool: 证据列表（按状态优先级 challenged>verified>unverified 与可信度排序，取前 10 条，note 不截断）
+- recentHistory: 最近 5 轮摘要（短期叙事连贯）
 - lastChoices: 上一轮的选项列表（用于避免重复）
-- worldContext: 世界观设定（地名、机构、术语、案件公开信息）
-- chapterScript: 当前章节的剧情指导（可释放真相层级、锚点、红鲱鱼、双刃证据）
+- playerAction: 玩家的操作（choiceId 或 userInput）
+- turn: 当前回合数
+- progress: 章节与场景信息
+
+更久远或完整的历史不在被动窗口里——需要时用 recall_memory 工具主动检索。
 `.trim();

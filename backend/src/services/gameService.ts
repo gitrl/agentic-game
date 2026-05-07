@@ -14,6 +14,7 @@ import {
 import { AppError } from "../core/errors.js";
 import type { GameRepository } from "../repositories/gameRepository.js";
 import { AgentService } from "./agentService.js";
+import { MemoryAgentService } from "./memoryAgentService.js";
 import type {
   ActionPayload,
   ActionResult,
@@ -23,15 +24,19 @@ import type {
   SaveSnapshot,
   TokenUsage
 } from "../types/game.js";
-import { writeMemoryFile } from "../utils/memoryFileWriter.js";
+
+/** Memory Agent 触发间隔（每 N 轮压缩一次最近 N 轮） */
+const MEMORY_COMPRESS_INTERVAL = 5;
 
 export class GameService {
   private readonly agentService: AgentService;
+  private readonly memoryAgent: MemoryAgentService;
 
   constructor(
     private readonly repository: GameRepository
   ) {
     this.agentService = new AgentService();
+    this.memoryAgent = new MemoryAgentService();
   }
 
   async createSession(): Promise<{ sessionId: string }> {
@@ -45,7 +50,6 @@ export class GameService {
     const state = await this.requireSession(sessionId);
     const result = initializeGame(state, payload);
     await this.repository.upsertSession(state);
-    writeMemoryFile(state);
     return {
       sessionId: state.sessionId,
       ...result
@@ -78,9 +82,6 @@ export class GameService {
 
     // 记录玩家经历过的最高章节（防止存档恢复时真相层级跳跃）
     state.maxRevealedChapter = Math.max(state.maxRevealedChapter ?? 1, state.progress.chapter);
-
-    // Write memory file BEFORE LLM call so it can read the latest context
-    await writeMemoryFile(state);
 
     // Call the Agent (LLM with tools) — this is the core agentic flow
     // LLM decides: narrative, stat changes, choices, evidence, NPC, memory
@@ -138,9 +139,22 @@ export class GameService {
       timestamp: new Date().toISOString()
     });
 
-    // Persist state and memory
+    // Persist state
     await this.repository.upsertSession(state);
-    writeMemoryFile(state);
+
+    // 每 MEMORY_COMPRESS_INTERVAL 轮异步触发 Memory Agent 压缩最近 N 轮为阶段摘要。
+    // void 不 await，不阻塞响应返回；压缩失败只 warn，不影响主流程。
+    // 串行化由 memoryAgent.compressPhase 内部的 inflight Map 保证。
+    if (state.turn > 0 && state.turn % MEMORY_COMPRESS_INTERVAL === 0) {
+      const fromTurn = state.turn - MEMORY_COMPRESS_INTERVAL + 1;
+      const toTurn = state.turn;
+      void this.memoryAgent
+        .compressPhase(state, fromTurn, toTurn)
+        .then(() => this.repository.upsertSession(state))
+        .catch((err) => {
+          console.warn("[GameService] Memory Agent 异步压缩异常：", err);
+        });
+    }
 
     // Build result
     const result: ActionResult = {

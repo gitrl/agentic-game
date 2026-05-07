@@ -1,68 +1,99 @@
-import { readLlmConfig } from "../config/llmConfig.js";
+import { randomUUID } from "crypto";
 import { AppError } from "../core/errors.js";
 
-const DASHSCOPE_TTS_URL =
-  "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2audio/generation";
+const VOLC_TTS_URL = "https://openspeech.bytedance.com/api/v1/tts";
+
+type VolcTtsResponse = {
+  code: number;
+  message?: string;
+  reqid?: string;
+  data?: string;
+};
 
 export class TtsService {
+  private readonly appid: string;
   private readonly apiKey: string;
-  private readonly model: string;
-  private readonly voice: string;
+  private readonly cluster: string;
+  private readonly voiceType: string;
+  private readonly encoding: string;
+  private readonly speedRatio: number;
 
   constructor() {
-    const config = readLlmConfig();
-    this.apiKey = config.apiKey;
-    this.model = process.env.TTS_MODEL?.trim() || "cosyvoice-v1";
-    this.voice = process.env.TTS_VOICE?.trim() || "longxiaochun";
+    this.appid = process.env.VOLC_TTS_APPID?.trim() ?? "";
+    this.apiKey = process.env.VOLC_TTS_API_KEY?.trim() ?? "";
+    this.cluster = process.env.VOLC_TTS_CLUSTER?.trim() || "volcano_tts";
+    this.voiceType = process.env.VOLC_TTS_VOICE_TYPE?.trim() || "BV001_streaming";
+    this.encoding = process.env.VOLC_TTS_ENCODING?.trim() || "mp3";
+    const speed = Number(process.env.VOLC_TTS_SPEED_RATIO);
+    this.speedRatio = Number.isFinite(speed) && speed > 0 ? speed : 1.0;
   }
 
   async synthesize(text: string): Promise<Buffer> {
-    const res = await fetch(DASHSCOPE_TTS_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json"
+    if (!this.appid || !this.apiKey) {
+      throw new AppError(
+        503,
+        "TTS 未配置：请在 backend/.env 设置 VOLC_TTS_APPID 与 VOLC_TTS_API_KEY",
+        "TTS_NOT_CONFIGURED"
+      );
+    }
+
+    const payload = {
+      app: {
+        appid: this.appid,
+        token: this.apiKey,
+        cluster: this.cluster
       },
-      body: JSON.stringify({
-        model: this.model,
-        input: { text },
-        parameters: { voice: this.voice, format: "mp3", sample_rate: 22050 }
-      }),
-      signal: AbortSignal.timeout(30_000)
-    });
+      user: {
+        uid: "agentic-game"
+      },
+      audio: {
+        voice_type: this.voiceType,
+        encoding: this.encoding,
+        speed_ratio: this.speedRatio
+      },
+      request: {
+        reqid: randomUUID(),
+        text,
+        text_type: "plain",
+        operation: "query"
+      }
+    };
+
+    let res: Response;
+    try {
+      res = await fetch(VOLC_TTS_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer;${this.apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(30_000)
+      });
+    } catch (err) {
+      const message = (err as { message?: string })?.message ?? "网络错误";
+      console.error(`[TTS] 火山请求失败: ${message}`);
+      throw new AppError(502, "语音合成网络失败", "TTS_NETWORK_ERROR");
+    }
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      console.error(`[TTS] DashScope 返回 ${res.status}: ${body}`);
+      console.error(`[TTS] 火山返回 ${res.status}: ${body}`);
       throw new AppError(502, `语音合成失败 (HTTP ${res.status})`, "TTS_ERROR");
     }
 
-    const contentType = res.headers.get("content-type") ?? "";
+    const json = (await res.json()) as VolcTtsResponse;
 
-    // DashScope 直接返回音频二进制
-    if (contentType.includes("audio")) {
-      const arrayBuffer = await res.arrayBuffer();
-      return Buffer.from(arrayBuffer);
+    // 火山返回 code=3000 表示成功，其他都是错误
+    if (json.code !== 3000 || !json.data) {
+      console.error(`[TTS] 火山业务错误 code=${json.code} message=${json.message}`);
+      throw new AppError(
+        502,
+        `语音合成失败：${json.message ?? "未知错误"} (code=${json.code})`,
+        "TTS_ERROR"
+      );
     }
 
-    // DashScope 返回 JSON 包装（含 base64 或 URL）
-    const json = (await res.json()) as {
-      output?: { audio?: string; audio_url?: string };
-    };
-
-    if (json.output?.audio) {
-      return Buffer.from(json.output.audio, "base64");
-    }
-
-    if (json.output?.audio_url) {
-      const audioRes = await fetch(json.output.audio_url, {
-        signal: AbortSignal.timeout(15_000)
-      });
-      const arrayBuffer = await audioRes.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    }
-
-    console.error("[TTS] 未知响应格式:", JSON.stringify(json).slice(0, 300));
-    throw new AppError(502, "语音合成返回格式异常", "TTS_ERROR");
+    return Buffer.from(json.data, "base64");
   }
 }

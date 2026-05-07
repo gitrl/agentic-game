@@ -182,6 +182,101 @@ function handleWriteMemoryAnchor(state: GameState, args: WriteMemoryAnchorArgs) 
   return { stored: true, total: state.memory.longAnchors.length };
 }
 
+export type RecallMemoryArgs = {
+  scope:
+    | "history_summaries"
+    | "replay_actions"
+    | "long_anchors"
+    | "mid_summary"
+    | "evidence_full"
+    | "known_truths";
+  query?: string;
+  turnFrom?: number;
+  turnTo?: number;
+  limit?: number;
+};
+
+type RecallHit = { ref: string; text: string; turn?: number };
+
+function handleRecallMemory(state: GameState, args: RecallMemoryArgs) {
+  const limit = clamp(Math.round(args.limit ?? 5), 1, 10);
+  const q = (args.query ?? "").trim().toLowerCase();
+  const matches = (text: string) => !q || text.toLowerCase().includes(q);
+  const inRange = (turn: number) => {
+    if (args.turnFrom != null && turn < args.turnFrom) return false;
+    if (args.turnTo != null && turn > args.turnTo) return false;
+    return true;
+  };
+
+  let hits: RecallHit[] = [];
+
+  switch (args.scope) {
+    case "history_summaries": {
+      hits = state.historySummaries
+        .map<RecallHit>((text, i) => ({ turn: i + 1, ref: `轮${i + 1}`, text }))
+        .filter((h) => matches(h.text) && inRange(h.turn!));
+      if (!q) hits = hits.reverse();
+      break;
+    }
+    case "replay_actions": {
+      hits = state.replay
+        .filter((r) => {
+          const blob = `${r.playerAction} ${r.narrativeSummary} ${r.events.join(" ")}`;
+          return matches(blob) && inRange(r.turn);
+        })
+        .map<RecallHit>((r) => ({
+          turn: r.turn,
+          ref: `轮${r.turn}`,
+          text: `玩家行动:${r.playerAction} | 叙事摘要:${r.narrativeSummary}${
+            r.events.length ? ` | 事件:${r.events.join("，")}` : ""
+          }`
+        }));
+      if (!q) hits = hits.reverse();
+      break;
+    }
+    case "long_anchors": {
+      hits = state.memory.longAnchors
+        .map<RecallHit>((text, i) => ({ ref: `锚点${i + 1}`, text }))
+        .filter((h) => matches(h.text));
+      break;
+    }
+    case "mid_summary": {
+      hits = state.memory.midSummary
+        .map<RecallHit>((text, i) => ({ ref: `阶段${i + 1}`, text }))
+        .filter((h) => matches(h.text));
+      break;
+    }
+    case "evidence_full": {
+      hits = state.evidencePool
+        .filter((e) => matches(e.title) || matches(e.note) || matches(e.source))
+        .map<RecallHit>((e) => ({
+          ref: e.id,
+          text: `${e.title} [${e.status}|可信度${e.reliability}] 来源:${e.source}${
+            e.note ? ` | 备注:${e.note}` : ""
+          }`
+        }));
+      break;
+    }
+    case "known_truths": {
+      hits = state.rebirth.knownTruths
+        .map<RecallHit>((text, i) => ({ ref: `真相${i + 1}`, text }))
+        .filter((h) => matches(h.text));
+      break;
+    }
+    default:
+      return { scope: args.scope, error: "unknown scope", matched: 0, returned: 0, results: [] };
+  }
+
+  const returned = hits.slice(0, limit);
+  return {
+    scope: args.scope,
+    query: q || null,
+    matched: hits.length,
+    returned: returned.length,
+    results: returned
+  };
+}
+
 // ── Main dispatcher ──────────────────────────────────────────────────────────
 
 export type ToolCallRecord = {
@@ -225,6 +320,9 @@ export function executeToolCall(
       break;
     case "write_memory_anchor":
       result = handleWriteMemoryAnchor(state, args as unknown as WriteMemoryAnchorArgs);
+      break;
+    case "recall_memory":
+      result = handleRecallMemory(state, args as unknown as RecallMemoryArgs);
       break;
     default:
       result = { error: `unknown tool: ${name}` };
