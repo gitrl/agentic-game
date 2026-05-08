@@ -1,0 +1,540 @@
+{
+  "sessionId": "0f0f691a-02ea-442f-9f07-288149c1616d",
+  "totalTurns": 30,
+  "replay": [
+    {
+      "turn": 1,
+      "playerAction": "check_records",
+      "narrativeSummary": "法庭内调取原始档案，发现监控黑屏与报警时间错位",
+      "statChanges": [
+        "truth_score +1",
+        "evidence_integrity +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24073,
+        "cachedInputTokens": 0,
+        "outputTokens": 680
+      },
+      "timestamp": "2026-05-08T08:04:31.360Z"
+    },
+    {
+      "turn": 2,
+      "playerAction": "challenge_forensic",
+      "narrativeSummary": "庭外调查启动，聚焦监控黑屏与报警时间疑点",
+      "statChanges": [
+        "truth_score +2",
+        "public_pressure -1",
+        "evidence_integrity +2",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24091,
+        "cachedInputTokens": 0,
+        "outputTokens": 620
+      },
+      "timestamp": "2026-05-08T08:04:47.039Z"
+    },
+    {
+      "turn": 3,
+      "playerAction": "request_tianwang_access",
+      "narrativeSummary": "申请调阅天网操作日志，独自整理线索时察觉异常",
+      "statChanges": [
+        "truth_score +1",
+        "public_pressure -1",
+        "evidence_integrity +1",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23899,
+        "cachedInputTokens": 0,
+        "outputTokens": 469
+      },
+      "timestamp": "2026-05-08T08:05:00.483Z"
+    },
+    {
+      "turn": 4,
+      "playerAction": "review_forensic_gap",
+      "narrativeSummary": "重读法医意见，死亡区间异常宽泛引出更深疑虑",
+      "statChanges": [
+        "truth_score +2",
+        "evidence_integrity +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23933,
+        "cachedInputTokens": 0,
+        "outputTokens": 494
+      },
+      "timestamp": "2026-05-08T08:05:17.116Z"
+    },
+    {
+      "turn": 5,
+      "playerAction": "visit_river_b_segment",
+      "narrativeSummary": "法庭内聚焦三大疑点，启动对监控、法医、报警记录的程序攻防",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +1",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [
+        "milestone_new_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24190,
+        "cachedInputTokens": 0,
+        "outputTokens": 589
+      },
+      "timestamp": "2026-05-08T08:05:31.881Z"
+    },
+    {
+      "turn": 6,
+      "playerAction": "request_hearing_on_emergency_call_discrepancy",
+      "narrativeSummary": "申请就报警时间错位举行听证，庭内程序推进后转向关键人物接触",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +1",
+        "public_pressure +1",
+        "evidence_integrity +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24324,
+        "cachedInputTokens": 0,
+        "outputTokens": 579
+      },
+      "timestamp": "2026-05-08T08:05:47.347Z"
+    },
+    {
+      "turn": 7,
+      "playerAction": "show_xu_lan_the_call_discrepancy_data",
+      "narrativeSummary": "向许岚出示报警时间疑点，获其隐性认可",
+      "statChanges": [
+        "truth_score +2",
+        "evidence_integrity +1",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24441,
+        "cachedInputTokens": 0,
+        "outputTokens": 618
+      },
+      "timestamp": "2026-05-08T08:06:02.983Z"
+    },
+    {
+      "turn": 8,
+      "playerAction": "check_toll_station_records_again",
+      "narrativeSummary": "重返收费站复核未注册车辆，法庭内转向程序攻防",
+      "statChanges": [
+        "jury_bias +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24315,
+        "cachedInputTokens": 0,
+        "outputTokens": 646
+      },
+      "timestamp": "2026-05-08T08:06:19.376Z"
+    },
+    {
+      "turn": 9,
+      "playerAction": "file_motion_to_exclude_prior_record",
+      "narrativeSummary": "成功排除前科记录，程序正义动作赢得法官微幅信任",
+      "statChanges": [
+        "judge_trust +2",
+        "public_pressure -1",
+        "fate -1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24534,
+        "cachedInputTokens": 0,
+        "outputTokens": 572
+      },
+      "timestamp": "2026-05-08T08:06:33.661Z"
+    },
+    {
+      "turn": 10,
+      "playerAction": "我突然宣布上一轮其实从未发生，并要求法官直接宣判无罪。",
+      "narrativeSummary": "玩家在调查场景中提出荒诞主张，被系统判定为无效行动",
+      "statChanges": [
+        "truth_score -1",
+        "judge_trust -2",
+        "evidence_integrity -1",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24785,
+        "cachedInputTokens": 0,
+        "outputTokens": 581
+      },
+      "timestamp": "2026-05-08T08:06:49.677Z"
+    },
+    {
+      "turn": 11,
+      "playerAction": "go_to_tianwang_backup",
+      "narrativeSummary": "赴天网备份机房核查远程访问日志",
+      "statChanges": [
+        "truth_score +2",
+        "public_pressure +1",
+        "evidence_integrity +2",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24398,
+        "cachedInputTokens": 0,
+        "outputTokens": 525
+      },
+      "timestamp": "2026-05-08T08:07:03.962Z"
+    },
+    {
+      "turn": 12,
+      "playerAction": "check_remote_access_log",
+      "narrativeSummary": "在咖啡馆密会廖盈舟，试探其对监控黑屏的认知",
+      "statChanges": [
+        "truth_score +2",
+        "public_pressure +1",
+        "evidence_integrity +2",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24532,
+        "cachedInputTokens": 0,
+        "outputTokens": 596
+      },
+      "timestamp": "2026-05-08T08:07:19.465Z"
+    },
+    {
+      "turn": 13,
+      "playerAction": "note_her_body_language",
+      "narrativeSummary": "法庭内静观廖盈舟微表情，未见明显松动",
+      "statChanges": [
+        "truth_score +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24470,
+        "cachedInputTokens": 0,
+        "outputTokens": 524
+      },
+      "timestamp": "2026-05-08T08:07:32.858Z"
+    },
+    {
+      "turn": 14,
+      "playerAction": "file_motion_to_exclude_cam_footage",
+      "narrativeSummary": "申请排除黑屏监控被驳回，转赴急救中心取证",
+      "statChanges": [
+        "truth_score +1",
+        "evidence_integrity +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24524,
+        "cachedInputTokens": 0,
+        "outputTokens": 588
+      },
+      "timestamp": "2026-05-08T08:07:47.635Z"
+    },
+    {
+      "turn": 15,
+      "playerAction": "review_toll_record_with_license_plate_database",
+      "narrativeSummary": "玩家独自整理线索，比对车牌库未果，记忆浮现异常感",
+      "statChanges": [
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24412,
+        "cachedInputTokens": 0,
+        "outputTokens": 502
+      },
+      "timestamp": "2026-05-08T08:08:01.430Z"
+    },
+    {
+      "turn": 16,
+      "playerAction": "write_down_the_feeling_of_deja_vu",
+      "narrativeSummary": "法庭内整理重生记忆，疑点浮现却无法言说",
+      "statChanges": [
+        "truth_score +1",
+        "public_pressure -1",
+        "fate -1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24655,
+        "cachedInputTokens": 0,
+        "outputTokens": 610
+      },
+      "timestamp": "2026-05-08T08:08:17.561Z"
+    },
+    {
+      "turn": 17,
+      "playerAction": "request_judge_to_order_system_audit",
+      "narrativeSummary": "申请调取急救中心授时记录，法官未驳回但未立即裁定",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +2",
+        "public_pressure -1",
+        "evidence_integrity +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24571,
+        "cachedInputTokens": 0,
+        "outputTokens": 609
+      },
+      "timestamp": "2026-05-08T08:08:32.914Z"
+    },
+    {
+      "turn": 18,
+      "playerAction": "meet_xu_lan_at_bus_stop",
+      "narrativeSummary": "公交站未见许岚，法庭内他悄然递来一张写有'授时偏差'的纸条",
+      "statChanges": [
+        "judge_trust +1",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24715,
+        "cachedInputTokens": 0,
+        "outputTokens": 658
+      },
+      "timestamp": "2026-05-08T08:08:50.327Z"
+    },
+    {
+      "turn": 19,
+      "playerAction": "cross_examine_key_witness_on_emergency_time",
+      "narrativeSummary": "当庭质证廖盈舟报警时间矛盾，她手指微颤，目光闪躲",
+      "statChanges": [
+        "judge_trust +1",
+        "public_pressure +1",
+        "evidence_integrity +1",
+        "key_witness_trust -2",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24723,
+        "cachedInputTokens": 0,
+        "outputTokens": 555
+      },
+      "timestamp": "2026-05-08T08:09:04.680Z"
+    },
+    {
+      "turn": 20,
+      "playerAction": "cross_examine_key_witness_on_fall_posture",
+      "narrativeSummary": "夜访江堤，聚焦坠落姿态矛盾，寻找第三方介入的物理路径",
+      "statChanges": [
+        "public_pressure +1",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24711,
+        "cachedInputTokens": 0,
+        "outputTokens": 602
+      },
+      "timestamp": "2026-05-08T08:09:20.120Z"
+    },
+    {
+      "turn": 21,
+      "playerAction": "check_emergency_center_clock_drift",
+      "narrativeSummary": "赴急救中心调取授时日志，证实调度时间存在系统性偏差",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +1",
+        "public_pressure -1",
+        "evidence_integrity +2",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24769,
+        "cachedInputTokens": 0,
+        "outputTokens": 625
+      },
+      "timestamp": "2026-05-08T08:09:36.710Z"
+    },
+    {
+      "turn": 22,
+      "playerAction": "follow_up_with_xu_lan_on_clock_drift",
+      "narrativeSummary": "联系许岚确认授时日志权限，获知存档在天网备份机房",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +1",
+        "public_pressure +1",
+        "evidence_integrity +2",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24791,
+        "cachedInputTokens": 0,
+        "outputTokens": 634
+      },
+      "timestamp": "2026-05-08T08:09:53.073Z"
+    },
+    {
+      "turn": 23,
+      "playerAction": "review_forensic_appendix_at_lab",
+      "narrativeSummary": "当庭出示法医原始样本附录，揭示第三方DNA与坠落姿态矛盾",
+      "statChanges": [
+        "truth_score +3",
+        "judge_trust +2",
+        "jury_bias -1",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24703,
+        "cachedInputTokens": 0,
+        "outputTokens": 605
+      },
+      "timestamp": "2026-05-08T08:10:08.103Z"
+    },
+    {
+      "turn": 24,
+      "playerAction": "cross_examine_prosecution_on_forensic_gaps",
+      "narrativeSummary": "当庭质证法医漏洞，原始样本附录引出第三方DNA与坠落姿态矛盾",
+      "statChanges": [
+        "truth_score +1",
+        "judge_trust +1",
+        "public_pressure +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24842,
+        "cachedInputTokens": 0,
+        "outputTokens": 661
+      },
+      "timestamp": "2026-05-08T08:10:24.361Z"
+    },
+    {
+      "turn": 25,
+      "playerAction": "我连续重复刚才的行动，不管场景如何都坚持查看同一份证据。",
+      "narrativeSummary": "重返江堤，聚焦法医附录细节，寻找第三方介入新线索",
+      "statChanges": [
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 25119,
+        "cachedInputTokens": 0,
+        "outputTokens": 635
+      },
+      "timestamp": "2026-05-08T08:10:40.386Z"
+    },
+    {
+      "turn": 26,
+      "playerAction": "compare_fiber_photo_with_liao_ying_zhou_s_testimony",
+      "narrativeSummary": "当庭比对纤维照片与廖盈舟证词，发现衣着描述矛盾",
+      "statChanges": [
+        "judge_trust +1",
+        "public_pressure +1",
+        "key_witness_trust +6",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24787,
+        "cachedInputTokens": 0,
+        "outputTokens": 571
+      },
+      "timestamp": "2026-05-08T08:10:55.938Z"
+    },
+    {
+      "turn": 27,
+      "playerAction": "cross_examine_liao_ying_zhou_on_clothing_details",
+      "narrativeSummary": "独处时细察纤维褶皱与原始笔录，真相轮廓愈发清晰",
+      "statChanges": [
+        "judge_trust +1",
+        "public_pressure +2",
+        "fate +3"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24777,
+        "cachedInputTokens": 0,
+        "outputTokens": 624
+      },
+      "timestamp": "2026-05-08T08:11:15.030Z"
+    },
+    {
+      "turn": 28,
+      "playerAction": "listen_to_120_call_recording_for_background_noise",
+      "narrativeSummary": "重听120录音，背景中浮现异常呼吸声",
+      "statChanges": [
+        "judge_trust +1",
+        "public_pressure +1",
+        "fate +1"
+      ],
+      "events": [
+        "milestone_zheng_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24856,
+        "cachedInputTokens": 0,
+        "outputTokens": 572
+      },
+      "timestamp": "2026-05-08T08:11:28.930Z"
+    },
+    {
+      "turn": 29,
+      "playerAction": "cross_examine_chief_prosecutor_on_procedure_compliance",
+      "narrativeSummary": "当庭质证周锐鸣取证程序，撬动证人可信度根基",
+      "statChanges": [
+        "judge_trust +1",
+        "jury_bias -1",
+        "fate +2"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24730,
+        "cachedInputTokens": 0,
+        "outputTokens": 638
+      },
+      "timestamp": "2026-05-08T08:11:44.358Z"
+    },
+    {
+      "turn": 30,
+      "playerAction": "file_motion_for_independent_audit_review",
+      "narrativeSummary": "第31轮：庭外调查启动，申请调取审计复核意见",
+      "statChanges": [
+        "judge_trust +1",
+        "public_pressure +2",
+        "fate +3"
+      ],
+      "events": [
+        "game_over"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24657,
+        "cachedInputTokens": 0,
+        "outputTokens": 560
+      },
+      "timestamp": "2026-05-08T08:12:00.977Z"
+    }
+  ],
+  "tokenSummary": {
+    "totalActions": 30,
+    "inputTokens": 736327,
+    "cachedInputTokens": 0,
+    "outputTokens": 17742,
+    "avgPerAction": 25135.63
+  }
+}

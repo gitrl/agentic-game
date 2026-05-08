@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   BookOpenText,
@@ -11,6 +11,7 @@ import {
   Radar,
   Save,
   Scale,
+  SendHorizontal,
   ShieldAlert,
   ShieldCheck,
   Timer,
@@ -70,7 +71,7 @@ const defaultProgress: Progress = {
   chapter: 1,
   chapterTitle: "未开始",
   sceneInChapter: 1,
-  maxScenesInChapter: 8
+  maxScenesInChapter: 10
 };
 
 const defaultStats: Stats = {
@@ -101,6 +102,7 @@ function App() {
   const [status, setStatus] = useState("请先阅读案情并输入姓名");
 
   const [name, setName] = useState("沈言");
+  const [freeInput, setFreeInput] = useState("");
 
   type ActionSource = "choice" | "input" | "intro";
   type PendingAction = {
@@ -564,6 +566,22 @@ function App() {
     await submitTurn({ choiceId });
   };
 
+  const handleFreeInput = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const text = freeInput.trim();
+    if (!text) {
+      setStatus("请输入你的行动指令，或选择下方策略卡片");
+      return;
+    }
+
+    updatePendingAction({
+      action: text,
+      source: "input"
+    });
+    setFreeInput("");
+    await submitTurn({ userInput: text });
+  };
+
   const handleSseEvent = (rawEvent: string) => {
     const lines = rawEvent.split("\n");
     let eventType = "message";
@@ -976,6 +994,24 @@ function App() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                <form className="grid grid-cols-[minmax(0,1fr)_auto] gap-2" onSubmit={handleFreeInput}>
+                  <Input
+                    value={freeInput}
+                    onChange={(event) => setFreeInput(event.target.value)}
+                    disabled={busy || !initialized || gameOver}
+                    placeholder="输入临时行动指令"
+                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-500"
+                  />
+                  <Button
+                    type="submit"
+                    className="bg-cyan-500 px-4 text-slate-950 hover:bg-cyan-400"
+                    disabled={busy || !initialized || gameOver || !freeInput.trim()}
+                  >
+                    <SendHorizontal className="h-4 w-4" />
+                    执行
+                  </Button>
+                </form>
+
                 <div className={cn(
                   "grid gap-3",
                   choices.length <= 3 ? "grid-cols-3" : choices.length === 4 ? "grid-cols-2" : "grid-cols-3"
@@ -984,7 +1020,7 @@ function App() {
                     <button
                       key={choice.id}
                       className={cn(
-                        "group relative min-h-[150px] overflow-hidden rounded-lg border border-cyan-300/20 bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-left transition",
+                        "group relative min-h-[200px] overflow-hidden rounded-lg border border-cyan-300/20 bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-left transition",
                         "hover:-translate-y-0.5 hover:border-cyan-300/45 hover:shadow-[0_8px_28px_rgba(34,211,238,0.18)]",
                         "disabled:cursor-not-allowed disabled:opacity-50"
                       )}

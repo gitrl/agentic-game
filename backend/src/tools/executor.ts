@@ -7,6 +7,24 @@ const clamp = (value: number, min: number, max: number): number =>
 const clampDelta = (delta: number, min: number, max: number): number =>
   clamp(Math.round(delta), min, max);
 
+// truthScore 与 evidenceIntegrity 按当前 turn 区间限制硬上限，避免 LLM 早期推满。
+// 上限值取自 prompt "高阶数值参考" 表，但这里强制执行；prompt 软约束 LLM 经常忽略。
+const getTruthScoreCap = (turn: number): number => {
+  if (turn <= 10) return 62;
+  if (turn <= 20) return 70;
+  if (turn <= 30) return 78;
+  if (turn <= 40) return 85;
+  return 95;
+};
+
+const getEvidenceIntegrityCap = (turn: number): number => {
+  if (turn <= 10) return 60;
+  if (turn <= 20) return 68;
+  if (turn <= 30) return 74;
+  if (turn <= 40) return 82;
+  return 92;
+};
+
 // ── Individual tool handlers ─────────────────────────────────────────────────
 
 export type ResolvePlayerInputArgs = {
@@ -36,11 +54,14 @@ export type UpdateStatsArgs = {
 function handleUpdateStats(state: GameState, args: UpdateStatsArgs) {
   const before = { ...state.stats, fate: state.rebirth.fate };
 
-  state.stats.truthScore = clamp(state.stats.truthScore + clampDelta(args.truthScore, -10, 10), 0, 100);
+  const truthCap = getTruthScoreCap(state.turn);
+  const evidenceCap = getEvidenceIntegrityCap(state.turn);
+
+  state.stats.truthScore = clamp(state.stats.truthScore + clampDelta(args.truthScore, -10, 10), 0, truthCap);
   state.stats.judgeTrust = clamp(state.stats.judgeTrust + clampDelta(args.judgeTrust, -10, 10), 0, 100);
   state.stats.juryBias = clamp(state.stats.juryBias + clampDelta(args.juryBias, -15, 15), -100, 100);
   state.stats.publicPressure = clamp(state.stats.publicPressure + clampDelta(args.publicPressure, -10, 10), 0, 100);
-  state.stats.evidenceIntegrity = clamp(state.stats.evidenceIntegrity + clampDelta(args.evidenceIntegrity, -10, 10), 0, 100);
+  state.stats.evidenceIntegrity = clamp(state.stats.evidenceIntegrity + clampDelta(args.evidenceIntegrity, -10, 10), 0, evidenceCap);
   state.rebirth.fate = clamp(state.rebirth.fate + clampDelta(args.fateDelta, -8, 8), 0, 100);
 
   return {
@@ -67,9 +88,9 @@ export type GenerateChoicesArgs = {
 function handleGenerateChoices(state: GameState, args: GenerateChoicesArgs) {
   const choices: Choice[] = args.choices.map((c) => ({
     id: c.id || uuidv4(),
-    title: (c.title || "未命名选项").slice(0, 20),
-    description: (c.description || "").slice(0, 60),
-    impactHint: (c.impactHint || "").slice(0, 20)
+    title: (c.title || "未命名选项").slice(0, 60),
+    description: (c.description || "").slice(0, 120),
+    impactHint: (c.impactHint || "").slice(0, 40)
   }));
 
   state.currentChoices = choices;

@@ -3,7 +3,7 @@ import type { GameState, InputFeedback, TokenUsage } from "../types/game.js";
 import { readLlmConfig, type LlmConfig } from "../config/llmConfig.js";
 import { AGENT_SYSTEM_PROMPT } from "../prompts/agentSystemPrompt.js";
 import { WORLD_CONTEXT } from "../prompts/worldContext.js";
-import { buildChapterContext } from "../prompts/chapterScripts.js";
+import { buildChapterContext, getSceneType, SCENE_TYPE_HINTS } from "../prompts/chapterScripts.js";
 import { TOOL_DEFINITIONS } from "../tools/definitions.js";
 import { executeToolCall, type ToolCallRecord } from "../tools/executor.js";
 import { AppError } from "../core/errors.js";
@@ -223,8 +223,12 @@ export class AgentService {
     // Build input feedback from resolve_player_input tool call if present
     const inputFeedback = this.buildInputFeedback(playerAction, allToolCalls, state);
 
-    // Validate required tool calls（包含 submit_summary）
-    this.validateRequiredTools(allToolCalls);
+    // LLM 偶尔会在叙事里描写 NPC，却漏掉 shift_npc_relation。
+    // 这类遗漏不该中断整轮，自动补一个 0 delta 关系记录即可保持状态机可审计。
+    this.repairMissingNpcRelationTools(allToolCalls, narrative, state);
+
+    // Validate required tool calls（包含 submit_summary 与条件强制 shift_npc_relation）
+    this.validateRequiredTools(allToolCalls, narrative);
 
     // 从 submit_summary 工具调用中取出 summary
     const summary = this.extractSummary(allToolCalls) ?? narrative.slice(0, 40);
@@ -313,7 +317,21 @@ export class AgentService {
       lastChoices: compactChoices,
       playerAction: actionDesc,
       turn: nextTurn,
-      progress
+      progress,
+      currentScene: this.buildCurrentSceneContext(progress)
+    };
+  }
+
+  /**
+   * 根据当前章节与场景号查出场景类型，构建给 LLM 的"主舞台"提示。
+   * 强制 LLM 按预设节律切换法庭/调查/接触/个人场景，
+   * 杜绝"散庭后…"万能转场导致的物理逻辑断裂。
+   */
+  private buildCurrentSceneContext(progress: { chapter: number; sceneInChapter: number }) {
+    const sceneType = getSceneType(progress.chapter, progress.sceneInChapter);
+    return {
+      type: sceneType,
+      hint: SCENE_TYPE_HINTS[sceneType]
     };
   }
 
@@ -414,7 +432,7 @@ export class AgentService {
     };
   }
 
-  private validateRequiredTools(toolCalls: ToolCallRecord[]): void {
+  private validateRequiredTools(toolCalls: ToolCallRecord[], narrative: string): void {
     const calledNames = new Set(toolCalls.map((tc) => tc.name));
 
     if (!calledNames.has("update_stats")) {
@@ -425,6 +443,75 @@ export class AgentService {
     }
     if (!calledNames.has("submit_summary")) {
       throw new AppError(502, "AI 未调用 submit_summary 工具，请重试。", "LLM_MISSING_TOOL");
+    }
+
+    // 条件强制：叙事提到任一 NPC 关键词 → 必须调用 shift_npc_relation 至少一次
+    // 防止"叙事在动、状态机不动"的脱钩问题
+    const NPC_KEYWORDS = [
+      "周锐鸣", "检察官",
+      "陈若澜", "审判长", "法官",
+      "廖盈舟", "证人",
+      "许岚", "调查员"
+    ];
+    const mentionedNpc = NPC_KEYWORDS.find((kw) => narrative.includes(kw));
+    if (mentionedNpc && !calledNames.has("shift_npc_relation")) {
+      throw new AppError(
+        502,
+        `AI 叙事中提到 NPC "${mentionedNpc}" 但未调用 shift_npc_relation，请重试。`,
+        "LLM_MISSING_TOOL"
+      );
+    }
+  }
+
+  private repairMissingNpcRelationTools(
+    toolCalls: ToolCallRecord[],
+    narrative: string,
+    state: GameState
+  ): void {
+    const npcMentionRules = [
+      {
+        npcId: "chiefProsecutor",
+        keywords: ["周锐鸣", "检察官", "公诉人"]
+      },
+      {
+        npcId: "presidingJudge",
+        keywords: ["陈若澜", "审判长", "法官"]
+      },
+      {
+        npcId: "keyWitness",
+        keywords: ["廖盈舟", "关键证人", "证人"]
+      },
+      {
+        npcId: "investigatorXu",
+        keywords: ["许岚", "调查员", "老刑侦"]
+      }
+    ];
+
+    const shiftedNpcIds = new Set(
+      toolCalls
+        .filter((tc) => tc.name === "shift_npc_relation")
+        .map((tc) => (tc.args as { npcId?: string }).npcId)
+        .filter((npcId): npcId is string => Boolean(npcId))
+    );
+
+    for (const rule of npcMentionRules) {
+      const mentioned = rule.keywords.some((keyword) => narrative.includes(keyword));
+      if (!mentioned || shiftedNpcIds.has(rule.npcId)) {
+        continue;
+      }
+
+      const record = executeToolCall(
+        "shift_npc_relation",
+        JSON.stringify({
+          npcId: rule.npcId,
+          trustDelta: 0,
+          reason: "自动补记：叙事提到该 NPC，但模型漏调关系工具"
+        }),
+        state
+      );
+      toolCalls.push(record);
+      shiftedNpcIds.add(rule.npcId);
+      console.warn(`[AgentService] 自动补记 NPC 关系工具：${rule.npcId}`);
     }
   }
 }

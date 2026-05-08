@@ -54,6 +54,22 @@ export const TRUTH_LAYERS: Record<number, string> = {
 
 // ─── 分章剧本锚点 ───────────────────────────────────────────────────────
 
+/**
+ * 场景类型：决定本轮叙事的"主舞台"，避免每轮都"散庭后…"硬切换。
+ * - court: 法庭场景（开庭质证、程序异议、证据出示、法官裁定）
+ * - investigation: 实地调查（重访现场、调取记录、暗道勘查、查阅档案）
+ * - interrogation: 关键人物接触（看守所会见林策、咖啡馆密会证人/调查员）
+ * - personal: 个人场景（整理线索、收到密信、遭遇跟踪、内心独白）
+ */
+export type SceneType = "court" | "investigation" | "interrogation" | "personal";
+
+export const SCENE_TYPE_HINTS: Record<SceneType, string> = {
+  court: "法庭场景。本轮主要发生在第一庭——开庭质证、程序异议、证据出示、法官裁定。叙事开头交代法庭氛围，结尾通常以法槌、休庭或法官表态收束。不要在本轮跑去江堤/咖啡馆等外景。",
+  investigation: "庭外实地调查场景。本轮玩家走出法庭，前往江堤、急救中心、天网机房、宏泽工地等具体地点取证。叙事开头交代位置转换，重点描写'可观察细节'。本轮不应进入法庭。",
+  interrogation: "关键人物接触场景。本轮玩家与林策（看守所）/廖盈舟（咖啡馆）/许岚（隐秘地点）等 NPC 单独对谈。叙事核心是对话、表情、试探。不应同时穿插法庭或现场调查。",
+  personal: "个人场景。本轮玩家独自整理线索、回忆案情、遭遇威胁/跟踪、或重生记忆涌现。叙事偏内心独白与环境异常，节奏放缓——给玩家一个'消化'的喘息轮。不应主动推进证据链。"
+};
+
 export type ChapterScript = {
   chapter: number;
   title: string;
@@ -63,6 +79,12 @@ export type ChapterScript = {
   redHerrings: string[];
   doubleEdged: string[];
   tone: string;
+  /**
+   * 庭审日历：长度恰为 10，对应 sceneInChapter 1-10。
+   * 不同场景类型不能混用——开庭日就在法庭，调查日就在外景，
+   * 强制 LLM 按节律切换，杜绝"一会开庭一会调查"的物理逻辑断裂。
+   */
+  sceneSchedule: SceneType[];
 };
 
 export const CHAPTER_SCRIPTS: ChapterScript[] = [
@@ -80,7 +102,19 @@ export const CHAPTER_SCRIPTS: ChapterScript[] = [
       "林策的前科：3 年前因酒后推搡他人被以故意伤害立案，后调解结案。检方会反复提及此点影响陪审。实际与本案无关，但会推高 juryBias"
     ],
     doubleEdged: [],
-    tone: "像走进一间灯光不太亮的房间——越看越觉得阴影里有东西，但你说不清是什么"
+    tone: "像走进一间灯光不太亮的房间——越看越觉得阴影里有东西，但你说不清是什么",
+    sceneSchedule: [
+      "court",          // 1: 首次开庭，建立疑点
+      "interrogation",  // 2: 看守所会见林策
+      "court",          // 3: 庭审继续
+      "investigation",  // 4: 庭外取证（首次走出法庭）
+      "personal",       // 5: 独自整理 / 收到第一条暗示
+      "investigation",  // 6: 再次实地
+      "court",          // 7: 回庭质证
+      "interrogation",  // 8: 接触关键证人或调查员
+      "investigation",  // 9: 章末调查
+      "court"           // 10: 章末庭审节点
+    ]
   },
   {
     chapter: 2,
@@ -98,7 +132,19 @@ export const CHAPTER_SCRIPTS: ChapterScript[] = [
     doubleEdged: [
       "跨江收费站记录（第 5 轮已自动加入）：证明案发时段有一辆未注册车辆经过江堤附近。有利面——证明现场不止林策一人。危险面——若在证据链不完整时贸然庭上提出，检方会反驳'过路车辆不能证明任何事'并提高警惕，暴露辩方调查方向"
     ],
-    tone: "拼图开始成形，但每拼上一块就发现缺了两块"
+    tone: "拼图开始成形，但每拼上一块就发现缺了两块",
+    sceneSchedule: [
+      "court",          // 11: 章首回庭
+      "investigation",  // 12: 急救中心
+      "investigation",  // 13: 天网机房
+      "interrogation",  // 14: 许岚试探性接触
+      "court",          // 15: 技术听证
+      "investigation",  // 16: 实地补证
+      "personal",       // 17: 独自比对线索 / 收到威胁
+      "court",          // 18: 庭审推进
+      "interrogation",  // 19: 关键证人私下接触
+      "court"           // 20: 章末攻防
+    ]
   },
   {
     chapter: 3,
@@ -117,7 +163,19 @@ export const CHAPTER_SCRIPTS: ChapterScript[] = [
       "监控黑屏技术鉴定报告：若玩家成功证明黑屏是人为操作但无法指出操作者，检方可能反转论证'林策具备基本技术能力，不排除他是操作者'",
       "证人廖盈舟的修正证词：反转后新证词虽有利，但若审判长 trust 过低，可能被以'证人前后矛盾、不可采信'为由排除"
     ],
-    tone: "猎人发现自己也是猎物——你追查的真相开始反噬你的处境"
+    tone: "猎人发现自己也是猎物——你追查的真相开始反噬你的处境",
+    sceneSchedule: [
+      "court",          // 21: 章首回庭
+      "investigation",  // 22: 江堤夜探
+      "interrogation",  // 23: 廖盈舟密会
+      "investigation",  // 24: 暗道勘查
+      "court",          // 25: 庭审推进
+      "interrogation",  // 26: 关键证人接触
+      "investigation",  // 27: 法医样本核验
+      "court",          // 28: 庭审推进
+      "personal",       // 29: 独自梳理 / 跟踪威胁
+      "court"           // 30: 章末（证人反转节点）
+    ]
   },
   {
     chapter: 4,
@@ -133,7 +191,19 @@ export const CHAPTER_SCRIPTS: ChapterScript[] = [
     doubleEdged: [
       "郑浩然的约见记录：可以证明他把梁蔚约到现场，但他不是凶手。如果玩家在庭上把他当凶手指控，会严重损害 judgeTrust（错误指控）并给检方反击机会"
     ],
-    tone: "棋到终局，每一步都是赌注——暴露得越多，你越危险"
+    tone: "棋到终局，每一步都是赌注——暴露得越多，你越危险",
+    sceneSchedule: [
+      "court",          // 31: 章首回庭
+      "investigation",  // 32: 宏泽工地 / 梁蔚住所
+      "interrogation",  // 33: 许岚突然沉默 / 接触受阻
+      "investigation",  // 34: 审计线索
+      "court",          // 35: 庭审推进
+      "personal",       // 36: 收到威胁信号
+      "investigation",  // 37: 资金流转线索
+      "court",          // 38: 庭审推进
+      "investigation",  // 39: 章末实地
+      "court"           // 40: 章末
+    ]
   },
   {
     chapter: 5,
@@ -147,9 +217,36 @@ export const CHAPTER_SCRIPTS: ChapterScript[] = [
     ],
     redHerrings: [],
     doubleEdged: [],
-    tone: "黎明前最黑暗的时刻——每一轮都可能是最后的转机或最终的崩盘"
+    tone: "黎明前最黑暗的时刻——每一轮都可能是最后的转机或最终的崩盘",
+    sceneSchedule: [
+      "investigation",  // 41: IP 溯源
+      "investigation",  // 42: 收费站交叉比对
+      "interrogation",  // 43: 郑浩然 / 许岚最后接触
+      "court",          // 44: 终审准备
+      "court",          // 45: 终审第 1 日
+      "court",          // 46: 终审第 2 日
+      "court",          // 47: 终审第 3 日
+      "court",          // 48: 终审第 4 日
+      "court",          // 49: 闭庭辩论
+      "court"           // 50: 终审判决
+    ]
   }
 ];
+
+// ─── 场景查询 ─────────────────────────────────────────────────────────────
+
+/**
+ * 根据章节号与章内场景号返回该轮的场景类型。
+ * 越界保护：超出章节范围或场景号无效时退回 "court"。
+ */
+export function getSceneType(chapter: number, sceneInChapter: number): SceneType {
+  const clampedChapter = Math.min(Math.max(chapter, 1), 5);
+  const script = CHAPTER_SCRIPTS[clampedChapter - 1];
+  if (!script) return "court";
+  const idx = sceneInChapter - 1;
+  if (idx < 0 || idx >= script.sceneSchedule.length) return "court";
+  return script.sceneSchedule[idx];
+}
 
 // ─── 构建注入文本 ─────────────────────────────────────────────────────────
 

@@ -406,12 +406,14 @@ export const applyMilestones = (state: GameState, events: string[]): void => {
   }
 
   // ── 里程碑 2：第 9 轮后 + truthScore >= 62 → 证人反转 ──
+  // trust 门槛 40（初始 35），配合 prompt 强制 LLM 在廖盈舟动摇时给 +5~+8，
+  // 避免出现"叙事反转 4 次但 flag 永远 false"的脱钩问题
   if (
     turn >= 9 &&
     stats.truthScore >= 62 &&
     !flags.keyWitnessFlipped &&
     npcRelations.keyWitness &&
-    npcRelations.keyWitness.trust >= 45
+    npcRelations.keyWitness.trust >= 40
   ) {
     flags.keyWitnessFlipped = true;
     npcRelations.keyWitness.trust = clamp(npcRelations.keyWitness.trust + 12, 0, 100);
@@ -540,9 +542,9 @@ export const checkGameOver = (state: GameState, events: string[]): void => {
   const isMaxTurn = state.turn >= 50;
   const isEarlyVictory =
     state.verdictOutlook === "truth" &&
-    state.turn >= 30 &&
-    state.stats.truthScore >= 78 &&
-    state.stats.evidenceIntegrity >= 72;
+    state.turn >= 45 &&
+    state.stats.truthScore >= 99 &&
+    state.stats.evidenceIntegrity >= 95;
 
   if (!isMaxTurn && !isEarlyVictory) return;
 

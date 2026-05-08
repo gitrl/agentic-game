@@ -1,0 +1,288 @@
+{
+  "sessionId": "4fd440fd-cb3e-4d9b-af90-c45f7e58b9fc",
+  "initialized": true,
+  "turn": 8,
+  "progress": {
+    "chapter": 1,
+    "chapterTitle": "回溯醒来",
+    "sceneInChapter": 9,
+    "maxScenesInChapter": 10
+  },
+  "player": {
+    "name": "沈言",
+    "role": "辩护律师",
+    "talent": "交叉质证",
+    "starterItem": "案卷标注笔"
+  },
+  "stats": {
+    "truthScore": 62,
+    "judgeTrust": 56,
+    "juryBias": -2,
+    "publicPressure": 38,
+    "evidenceIntegrity": 60
+  },
+  "flags": {
+    "keyWitnessFlipped": false,
+    "forgedEvidenceAdmitted": false,
+    "interferenceDetected": false
+  },
+  "evidencePool": [
+    {
+      "id": "ev-river-cam-raw",
+      "title": "江堤监控原始码流",
+      "source": "市政天网备份磁带",
+      "reliability": 56,
+      "status": "unverified",
+      "note": "案发前 14 分钟出现 43 秒黑屏，帧序列存在跳变"
+    },
+    {
+      "id": "ev-emergency-call",
+      "title": "120 接警与调度录音",
+      "source": "急救中心调度台",
+      "reliability": 52,
+      "status": "unverified",
+      "note": "首通报警时间与警方到场记录存在 7 分钟错位"
+    },
+    {
+      "id": "ev-forensic-opinion",
+      "title": "首轮法医鉴定意见",
+      "source": "司法鉴定所",
+      "reliability": 44,
+      "status": "challenged",
+      "note": "死亡时刻区间过宽，且关键体征推断缺乏原始样本附录"
+    },
+    {
+      "id": "ev-toll-record",
+      "title": "跨江收费站过闸记录",
+      "source": "市交通管理局调取",
+      "reliability": 63,
+      "status": "unverified",
+      "note": "案发时段有一辆未注册车辆经过江堤附近出口"
+    }
+  ],
+  "npcRelations": {
+    "chiefProsecutor": {
+      "trust": 28,
+      "stance": "hostile"
+    },
+    "presidingJudge": {
+      "trust": 56,
+      "stance": "neutral"
+    },
+    "keyWitness": {
+      "trust": 35,
+      "stance": "neutral"
+    },
+    "investigatorXu": {
+      "trust": 55,
+      "stance": "ally"
+    }
+  },
+  "verdictOutlook": "undetermined",
+  "currentNarrative": "第一庭的顶灯在证人席上方投下一圈冷白光，像手术台。我摊开江堤现场测绘图，指尖停在47号监控点位旁——那里用红笔标着“3.2°偏移”。周锐鸣正低头翻卷宗，钢笔悬在半空没落下去。陈若澜审判长目光扫过图纸，又抬起来，没说话，只把法槌轻轻推近手边。旁听席第三排，一个穿米色风衣的女人微微侧身，手指无意识摩挲着包带。我喉咙发紧。这角度偏差不是误差，是复位痕迹；而她今天不该坐在这里——上一世，她从没来过庭审现场。法槌声还没落，我听见自己开口：“审判长，这份偏差，足以动摇监控画面作为直接证据的根基。”",
+  "currentChoices": [
+    {
+      "id": "challenge_cam_angle_discrepancy",
+      "title": "当庭指出47号监控角度偏移异常",
+      "description": "基于江堤实地勘查结果，向法庭说明监控复位后存在3.2度偏差，影响关键画面可信度",
+      "impactHint": "直击检方证据链薄弱点，可能激怒周锐鸣"
+    },
+    {
+      "id": "introduce_dark_path_accessibility",
+      "title": "申请将暗道入口通行可能性纳入质证范围",
+      "description": "援引林策供述与现场勘查结论，论证被告具备绕过监控的物理条件",
+      "impactHint": "拓展辩方叙事空间，但需法官准许新质证方向"
+    },
+    {
+      "id": "request_judge_to_order_recalibration",
+      "title": "提请审判长裁定重新校准监控设备",
+      "description": "以技术误差影响事实认定为由，申请启动设备复测程序",
+      "impactHint": "程序正义路径，稳妥但耗时"
+    }
+  ],
+  "historySummaries": [
+    "序章：案件进入实质审理，案卷中存在多处异常。",
+    "当庭提出程序排异申请，法官准许审查证据合法性",
+    "庭外调查启动，聚焦监控黑屏与报警时间疑点",
+    "独自整理急救中心调取的日志，发现时间错位藏有异常",
+    "逐行比对120日志与通话记录，确认7分钟错位真实存在",
+    "江堤B段实地勘查后，当庭聚焦监控角度异常",
+    "向法官申请调取原始监控码流，获准；随即转入看守所会见林策",
+    "江堤暗道线索浮现，林策确认知晓入口但坚称未使用",
+    "江堤暗道勘查完成，法庭上首次提出监控角度偏差"
+  ],
+  "memory": {
+    "shortWindow": [
+      "急救中心的调度室灯光惨白，我坐在档案柜前，指尖划过打印纸边缘。120原始日志第7页右下角，一行小字被红笔圈出：“系统时钟校准失败（UTC+8），误差±3分42秒”。而林策手机通话记录里，那通“报警电话”的时间戳，恰好卡在误差上限。\n\n我合上文件夹，窗外梧桐叶影晃动。这不该是巧合——一个误差范围明确的系统故障，却让两份关键时间证据严丝合缝地咬合出“林策撒谎”的逻辑链。\n\n可为什么偏偏是这一通？  \n我摸向口袋里的旧录音笔，它曾录下上一世庭审最后三分钟……但此刻，电池指示灯是黑的。\n\n走廊尽头传来一声轻响，像金属门把被缓缓压下。",
+      "我合上急救中心调度室的打印日志，指尖还残留着纸张微涩的触感。7分钟——不是笔误，不是录入延迟，是120系统时间与林策手机通话时间之间，一道被刻意忽略的裂隙。\n\n走出调度室时天已擦黑，江风裹着水汽扑在脸上。我驱车直奔江堤B段，47号监控灯杆在暮色里像一根沉默的骨刺。我绕到护栏外，俯身查看斜坡乱石——没有拖拽痕迹，也没有新鲜的踩踏印。可当我抬头，视线掠过灯杆顶端的探头，忽然发现它朝向偏了三度：正对着暗道入口那扇锈蚀的铁门。\n\n铁门虚掩着，门缝底下，半截被踩扁的烟蒂还没干透。\n\n我刚伸手，身后传来一声轻响——不是脚步，是金属卡扣弹开的声音。\n\n我缓缓转身。",
+      "第一庭的顶灯冷白，照得47号监控截图上的角度偏移线格外刺眼。我将放大图推至证物展示屏，指尖停在那道3.2度的偏差线上——恢复画面里，灯杆阴影比黑屏前向右偏了七厘米。\n\n周锐鸣钢笔顿在案卷上，墨点晕开一小片深色。\n\n“检方能否说明，”我声音不高，却让书记员敲键盘的手指停了一瞬，“这帧偏移，是设备自校准，还是人为重置？”\n\n陈若澜没立刻开口，只将目光在截图与我之间缓缓扫过，最终落回屏幕。他颔首时，法槌边缘映出一点微光。\n\n旁听席第三排，廖盈舟低头看着自己的手，指节泛白。\n\n而就在我收回手的刹那，余光瞥见她袖口下露出半截纸条边角——不是法院配发的便签纸。\n\n法槌尚未落下，空气已绷紧如弦。",
+      "铁门滑开的闷响在走廊里撞出回音。我走进会见室，林策已坐在桌对面，手腕上还带着未褪尽的铐痕印。\n\n他抬眼时没说话，只是把右手无意识地翻过来——掌心朝上，指节处有道新鲜的擦伤。\n\n“监控黑屏那43秒，”我放慢语速，“你记得自己在哪？”\n\n他喉结动了动，目光忽然飘向单向玻璃：“……我记得风很大。还有，护栏下面，好像有光。”\n\n我顿住。江堤B段护栏外是六米乱石斜坡，不该有光。\n\n他指尖轻轻敲了敲桌面，像在数秒：“23:34整，我手机亮了一下。”\n\n而检方提交的通话记录显示，那通“报警电话”是在23:41拨出的。\n\n他没看我，却把那道擦伤正对着我。",
+      "我站在江堤B段护栏外，夜风裹着水腥味扑在脸上。脚下是乱石斜坡，三米开外，一道锈蚀铁门半掩在藤蔓后——暗道入口。\n\n林策没说谎。他确实知道这里。可他说“那晚我根本没靠近过这扇门”，声音很轻，却像钉子敲进我耳膜。\n\n我蹲下身，指尖抹过门框边缘：新刮痕，漆皮下露出金属本色，不到48小时。再抬头，47号监控探头静静俯视——它的盲区，正正覆盖这扇门。\n\n远处有手电光晃了一下，朝这边扫来。我没起身，只把手机镜头对准刮痕，按下录制。\n\n这道门，有人刚用过。",
+      "第一庭的顶灯在证人席上方投下一圈冷白光，像手术台。我摊开江堤现场测绘图，指尖停在47号监控点位旁——那里用红笔标着“3.2°偏移”。周锐鸣正低头翻卷宗，钢笔悬在半空没落下去。陈若澜审判长目光扫过图纸，又抬起来，没说话，只把法槌轻轻推近手边。旁听席第三排，一个穿米色风衣的女人微微侧身，手指无意识摩挲着包带。我喉咙发紧。这角度偏差不是误差，是复位痕迹；而她今天不该坐在这里——上一世，她从没来过庭审现场。法槌声还没落，我听见自己开口：“审判长，这份偏差，足以动摇监控画面作为直接证据的根基。”"
+    ],
+    "midSummary": [
+      "前置背景建立完成：案件疑点浮现，需要从证据入手寻找突破口。",
+      "[轮1-5] 申请程序排异获准，启动庭外调查聚焦监控黑屏与报警时间疑点；独自整理急救中心日志发现时间错位异常，逐行比对120记录确认7分钟错位真实存在；江堤B段实地勘查锁定监控角度异常，当庭提交新证据并触发里程碑。"
+    ],
+    "longAnchors": [
+      "上一世的判决是错的，但我无法直接说出理由"
+    ]
+  },
+  "rebirth": {
+    "loop": 1,
+    "memoryRetention": 0.6,
+    "knownTruths": [
+      "上一世的判决是错的"
+    ],
+    "fate": 56
+  },
+  "replay": [
+    {
+      "turn": 1,
+      "playerAction": "file_motion",
+      "narrativeSummary": "当庭提出程序排异申请，法官准许审查证据合法性",
+      "statChanges": [
+        "truth_score +1",
+        "judge_trust +2",
+        "jury_bias -2",
+        "public_pressure -1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23898,
+        "cachedInputTokens": 0,
+        "outputTokens": 550
+      },
+      "timestamp": "2026-05-08T06:09:11.617Z"
+    },
+    {
+      "turn": 2,
+      "playerAction": "challenge_forensic_opinion",
+      "narrativeSummary": "庭外调查启动，聚焦监控黑屏与报警时间疑点",
+      "statChanges": [
+        "truth_score +2",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23858,
+        "cachedInputTokens": 0,
+        "outputTokens": 503
+      },
+      "timestamp": "2026-05-08T06:11:48.932Z"
+    },
+    {
+      "turn": 3,
+      "playerAction": "go_to_emergency_center",
+      "narrativeSummary": "独自整理急救中心调取的日志，发现时间错位藏有异常",
+      "statChanges": [
+        "truth_score +1",
+        "public_pressure -1",
+        "evidence_integrity +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23928,
+        "cachedInputTokens": 0,
+        "outputTokens": 494
+      },
+      "timestamp": "2026-05-08T06:17:47.382Z"
+    },
+    {
+      "turn": 4,
+      "playerAction": "review_emergency_log",
+      "narrativeSummary": "逐行比对120日志与通话记录，确认7分钟错位真实存在",
+      "statChanges": [
+        "truth_score +2",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23973,
+        "cachedInputTokens": 0,
+        "outputTokens": 500
+      },
+      "timestamp": "2026-05-08T06:39:16.301Z"
+    },
+    {
+      "turn": 5,
+      "playerAction": "visit_riverbank_b_section",
+      "narrativeSummary": "江堤B段实地勘查后，当庭聚焦监控角度异常",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +1",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [
+        "milestone_new_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24286,
+        "cachedInputTokens": 0,
+        "outputTokens": 698
+      },
+      "timestamp": "2026-05-08T06:49:38.030Z"
+    },
+    {
+      "turn": 6,
+      "playerAction": "request_judge_order_for_raw_footage",
+      "narrativeSummary": "向法官申请调取原始监控码流，获准；随即转入看守所会见林策",
+      "statChanges": [
+        "truth_score +2",
+        "judge_trust +2",
+        "public_pressure -1",
+        "evidence_integrity +2",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24447,
+        "cachedInputTokens": 0,
+        "outputTokens": 590
+      },
+      "timestamp": "2026-05-08T06:49:56.125Z"
+    },
+    {
+      "turn": 7,
+      "playerAction": "ask_about_dark_path",
+      "narrativeSummary": "江堤暗道线索浮现，林策确认知晓入口但坚称未使用",
+      "statChanges": [
+        "truth_score +2",
+        "evidence_integrity +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24355,
+        "cachedInputTokens": 0,
+        "outputTokens": 470
+      },
+      "timestamp": "2026-05-08T07:14:35.493Z"
+    },
+    {
+      "turn": 8,
+      "playerAction": "check_dark_path_entrance",
+      "narrativeSummary": "江堤暗道勘查完成，法庭上首次提出监控角度偏差",
+      "statChanges": [
+        "judge_trust +1",
+        "public_pressure +1",
+        "fate +1"
+      ],
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24448,
+        "cachedInputTokens": 0,
+        "outputTokens": 562
+      },
+      "timestamp": "2026-05-08T07:43:49.789Z"
+    }
+  ],
+  "gameOver": false,
+  "endingType": null,
+  "endingNarrative": "",
+  "lastChoiceId": "",
+  "maxRevealedChapter": 1
+}

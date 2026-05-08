@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc *)",
-      "Bash(npx --package typescript tsc --noEmit)"
+      "Bash(npx --package typescript tsc --noEmit)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(grep -nE \"\\\\`[a-zA-Z]\" backend/src/prompts/agentSystemPrompt.ts)"
     ]
   }
 }

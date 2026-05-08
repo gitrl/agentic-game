@@ -94,6 +94,32 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
+### 50 轮自动评测
+
+先启动后端（或完整 dev 服务），再运行：
+
+```bash
+npm run evaluate:50
+```
+
+脚本会自动创建一局新游戏、初始化角色、连续推进最多 50 轮，并在默认第 10/25/40 轮注入 3 次捣乱动作。运行结束后会在 `docs/评测提交包/` 生成：
+
+- `replay-{sessionId}-{轮数}轮.json`：完整回放日志与 Token 汇总
+- `捣乱动作记录-{sessionId}.md`：3 次捣乱动作与系统反馈
+- `自动评测运行记录-{sessionId}.json`：自动操作元数据
+
+可选环境变量：
+
+```bash
+API_BASE=http://localhost:4000 EVAL_ROUNDS=50 SABOTAGE_TURNS=10,25,40 npm run evaluate:50
+```
+
+PowerShell：
+
+```powershell
+$env:API_BASE="http://localhost:4000"; $env:EVAL_ROUNDS="50"; $env:SABOTAGE_TURNS="10,25,40"; npm run evaluate:50
+```
+
 ### 技术栈
 
 | 层 | 技术 |

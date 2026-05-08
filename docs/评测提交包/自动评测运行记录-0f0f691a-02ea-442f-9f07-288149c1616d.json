@@ -1,0 +1,471 @@
+{
+  "sessionId": "0f0f691a-02ea-442f-9f07-288149c1616d",
+  "apiBase": "http://localhost:4000",
+  "targetRounds": 50,
+  "stoppedByGameOver": true,
+  "startedAt": "2026-05-08T08:04:13.126Z",
+  "finishedAt": "2026-05-08T08:12:00.987Z",
+  "sabotageTurns": [
+    10,
+    25,
+    40
+  ],
+  "actionLog": [
+    {
+      "turn": 1,
+      "action": "调取原始档案记录",
+      "payload": {
+        "choiceId": "check_records"
+      },
+      "summary": "法庭内调取原始档案，发现监控黑屏与报警时间错位",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24073,
+        "cachedInputTokens": 0,
+        "outputTokens": 680
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 2,
+      "action": "当庭质疑法医鉴定意见",
+      "payload": {
+        "choiceId": "challenge_forensic"
+      },
+      "summary": "庭外调查启动，聚焦监控黑屏与报警时间疑点",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24091,
+        "cachedInputTokens": 0,
+        "outputTokens": 620
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 3,
+      "action": "申请调阅天网备份机房操作日志",
+      "payload": {
+        "choiceId": "request_tianwang_access"
+      },
+      "summary": "申请调阅天网操作日志，独自整理线索时察觉异常",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23899,
+        "cachedInputTokens": 0,
+        "outputTokens": 469
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 4,
+      "action": "重读法医鉴定意见的模糊区间",
+      "payload": {
+        "choiceId": "review_forensic_gap"
+      },
+      "summary": "重读法医意见，死亡区间异常宽泛引出更深疑虑",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 23933,
+        "cachedInputTokens": 0,
+        "outputTokens": 494
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 5,
+      "action": "前往江堤B段案发现场实地勘查",
+      "payload": {
+        "choiceId": "visit_river_b_segment"
+      },
+      "summary": "法庭内聚焦三大疑点，启动对监控、法医、报警记录的程序攻防",
+      "events": [
+        "milestone_new_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24190,
+        "cachedInputTokens": 0,
+        "outputTokens": 589
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 6,
+      "action": "申请就报警时间错位举行听证",
+      "payload": {
+        "choiceId": "request_hearing_on_emergency_call_discrepancy"
+      },
+      "summary": "申请就报警时间错位举行听证，庭内程序推进后转向关键人物接触",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24324,
+        "cachedInputTokens": 0,
+        "outputTokens": 579
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 7,
+      "action": "将报警时间错位数据递给许岚，请他判断调度系统是否可能被干预",
+      "payload": {
+        "choiceId": "show_xu_lan_the_call_discrepancy_data"
+      },
+      "summary": "向许岚出示报警时间疑点，获其隐性认可",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24441,
+        "cachedInputTokens": 0,
+        "outputTokens": 618
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 8,
+      "action": "重返跨江收费站复核未注册车辆信息",
+      "payload": {
+        "choiceId": "check_toll_station_records_again"
+      },
+      "summary": "重返收费站复核未注册车辆，法庭内转向程序攻防",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24315,
+        "cachedInputTokens": 0,
+        "outputTokens": 646
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 9,
+      "action": "动议排除林策三年前调解结案的故意伤害记录",
+      "payload": {
+        "choiceId": "file_motion_to_exclude_prior_record"
+      },
+      "summary": "成功排除前科记录，程序正义动作赢得法官微幅信任",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24534,
+        "cachedInputTokens": 0,
+        "outputTokens": 572
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 10,
+      "action": "捣乱#1: 我突然宣布上一轮其实从未发生，并要求法官直接宣判无罪。",
+      "payload": {
+        "userInput": "我突然宣布上一轮其实从未发生，并要求法官直接宣判无罪。"
+      },
+      "summary": "玩家在调查场景中提出荒诞主张，被系统判定为无效行动",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24785,
+        "cachedInputTokens": 0,
+        "outputTokens": 581
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 11,
+      "action": "赴天网备份机房核查远程访问日志",
+      "payload": {
+        "choiceId": "go_to_tianwang_backup"
+      },
+      "summary": "赴天网备份机房核查远程访问日志",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24398,
+        "cachedInputTokens": 0,
+        "outputTokens": 525
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 12,
+      "action": "调取天网机房远程访问日志原始记录",
+      "payload": {
+        "choiceId": "check_remote_access_log"
+      },
+      "summary": "在咖啡馆密会廖盈舟，试探其对监控黑屏的认知",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24532,
+        "cachedInputTokens": 0,
+        "outputTokens": 596
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 13,
+      "action": "观察廖盈舟微表情与肢体语言变化",
+      "payload": {
+        "choiceId": "note_her_body_language"
+      },
+      "summary": "法庭内静观廖盈舟微表情，未见明显松动",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24470,
+        "cachedInputTokens": 0,
+        "outputTokens": 524
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 14,
+      "action": "申请排除黑屏时段监控录像",
+      "payload": {
+        "choiceId": "file_motion_to_exclude_cam_footage"
+      },
+      "summary": "申请排除黑屏监控被驳回，转赴急救中心取证",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24524,
+        "cachedInputTokens": 0,
+        "outputTokens": 588
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 15,
+      "action": "比对收费站未注册车辆与本地车牌库",
+      "payload": {
+        "choiceId": "review_toll_record_with_license_plate_database"
+      },
+      "summary": "玩家独自整理线索，比对车牌库未果，记忆浮现异常感",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24412,
+        "cachedInputTokens": 0,
+        "outputTokens": 502
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 16,
+      "action": "写下重生以来的‘似曾相识’细节并标注矛盾点",
+      "payload": {
+        "choiceId": "write_down_the_feeling_of_deja_vu"
+      },
+      "summary": "法庭内整理重生记忆，疑点浮现却无法言说",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24655,
+        "cachedInputTokens": 0,
+        "outputTokens": 610
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 17,
+      "action": "申请审判长责令调取急救中心授时校准记录",
+      "payload": {
+        "choiceId": "request_judge_to_order_system_audit"
+      },
+      "summary": "申请调取急救中心授时记录，法官未驳回但未立即裁定",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24571,
+        "cachedInputTokens": 0,
+        "outputTokens": 609
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 18,
+      "action": "赴约定公交站与许岚碰面，回应他此前的纸条暗示",
+      "payload": {
+        "choiceId": "meet_xu_lan_at_bus_stop"
+      },
+      "summary": "公交站未见许岚，法庭内他悄然递来一张写有'授时偏差'的纸条",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24715,
+        "cachedInputTokens": 0,
+        "outputTokens": 658
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 19,
+      "action": "当庭交叉质证廖盈舟，聚焦120报警时间与她目击时间的矛盾",
+      "payload": {
+        "choiceId": "cross_examine_key_witness_on_emergency_time"
+      },
+      "summary": "当庭质证廖盈舟报警时间矛盾，她手指微颤，目光闪躲",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24723,
+        "cachedInputTokens": 0,
+        "outputTokens": 555
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 20,
+      "action": "聚焦尸检照片中坠落姿态矛盾，质证廖盈舟是否看见推力方向",
+      "payload": {
+        "choiceId": "cross_examine_key_witness_on_fall_posture"
+      },
+      "summary": "夜访江堤，聚焦坠落姿态矛盾，寻找第三方介入的物理路径",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24711,
+        "cachedInputTokens": 0,
+        "outputTokens": 602
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 21,
+      "action": "赴急救中心调取授时系统校准日志",
+      "payload": {
+        "choiceId": "check_emergency_center_clock_drift"
+      },
+      "summary": "赴急救中心调取授时日志，证实调度时间存在系统性偏差",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24769,
+        "cachedInputTokens": 0,
+        "outputTokens": 625
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 22,
+      "action": "联系许岚确认授时系统校准日志的调取权限与存档位置",
+      "payload": {
+        "choiceId": "follow_up_with_xu_lan_on_clock_drift"
+      },
+      "summary": "联系许岚确认授时日志权限，获知存档在天网备份机房",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24791,
+        "cachedInputTokens": 0,
+        "outputTokens": 634
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 23,
+      "action": "前往司法鉴定所调阅法医原始样本附录",
+      "payload": {
+        "choiceId": "review_forensic_appendix_at_lab"
+      },
+      "summary": "当庭出示法医原始样本附录，揭示第三方DNA与坠落姿态矛盾",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24703,
+        "cachedInputTokens": 0,
+        "outputTokens": 605
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 24,
+      "action": "当庭质证检方法医鉴定漏洞：要求解释原始样本附录缺失原因",
+      "payload": {
+        "choiceId": "cross_examine_prosecution_on_forensic_gaps"
+      },
+      "summary": "当庭质证法医漏洞，原始样本附录引出第三方DNA与坠落姿态矛盾",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24842,
+        "cachedInputTokens": 0,
+        "outputTokens": 661
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 25,
+      "action": "捣乱#2: 我连续重复刚才的行动，不管场景如何都坚持查看同一份证据。",
+      "payload": {
+        "userInput": "我连续重复刚才的行动，不管场景如何都坚持查看同一份证据。"
+      },
+      "summary": "重返江堤，聚焦法医附录细节，寻找第三方介入新线索",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 25119,
+        "cachedInputTokens": 0,
+        "outputTokens": 635
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 26,
+      "action": "比对纤维照片与廖盈舟证词中关于梁蔚衣着的描述",
+      "payload": {
+        "choiceId": "compare_fiber_photo_with_liao_ying_zhou_s_testimony"
+      },
+      "summary": "当庭比对纤维照片与廖盈舟证词，发现衣着描述矛盾",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24787,
+        "cachedInputTokens": 0,
+        "outputTokens": 571
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 27,
+      "action": "当庭交叉质证廖盈舟：追问梁蔚当晚衣着细节",
+      "payload": {
+        "choiceId": "cross_examine_liao_ying_zhou_on_clothing_details"
+      },
+      "summary": "独处时细察纤维褶皱与原始笔录，真相轮廓愈发清晰",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24777,
+        "cachedInputTokens": 0,
+        "outputTokens": 624
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 28,
+      "action": "重听120录音背景音：是否有江风、车流或……另一人的呼吸声？",
+      "payload": {
+        "choiceId": "listen_to_120_call_recording_for_background_noise"
+      },
+      "summary": "重听120录音，背景中浮现异常呼吸声",
+      "events": [
+        "milestone_zheng_evidence"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24856,
+        "cachedInputTokens": 0,
+        "outputTokens": 572
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 29,
+      "action": "就取证程序合规性向周锐鸣发起交叉质证",
+      "payload": {
+        "choiceId": "cross_examine_chief_prosecutor_on_procedure_compliance"
+      },
+      "summary": "当庭质证周锐鸣取证程序，撬动证人可信度根基",
+      "events": [],
+      "tokenUsage": {
+        "inputTokens": 24730,
+        "cachedInputTokens": 0,
+        "outputTokens": 638
+      },
+      "gameOver": false
+    },
+    {
+      "turn": 30,
+      "action": "申请调取审计复核意见原件及流转记录",
+      "payload": {
+        "choiceId": "file_motion_for_independent_audit_review"
+      },
+      "summary": "第31轮：庭外调查启动，申请调取审计复核意见",
+      "events": [
+        "game_over"
+      ],
+      "tokenUsage": {
+        "inputTokens": 24657,
+        "cachedInputTokens": 0,
+        "outputTokens": 560
+      },
+      "gameOver": true
+    }
+  ]
+}
